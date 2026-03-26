@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api, type ContractResponse } from "@/lib/api";
+import { toast } from "sonner";
 
 export function ProjectContractViewer({ token }: { token: string }) {
   const [data, setData] = useState<ContractResponse | null>(null);
@@ -13,7 +14,7 @@ export function ProjectContractViewer({ token }: { token: string }) {
     api
       .getContract(token)
       .then(setData)
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load contract"))
       .finally(() => setLoading(false));
   }, [token]);
 

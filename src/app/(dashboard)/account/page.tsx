@@ -154,7 +154,7 @@ function NotificationPreferencesSection() {
     api
       .getPreferences()
       .then((data) => setPrefs(data.preferences))
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load preferences"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -268,7 +268,7 @@ function TeamAccessSection() {
         );
         setCollabs(collabMap);
       })
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load team access"))
       .finally(() => setLoading(false));
   }, []);
 
