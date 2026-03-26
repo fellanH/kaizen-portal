@@ -436,17 +436,6 @@
 .ds-rule {
   height: 1px;
   background: var(--border);
-  position: relative;
-}
-.ds-rule::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 40px;
-  background: var(--primary);
-  opacity: 0.4;
 }
 
 /* Section wrapper with generous padding and staggered entrance */

@@ -82,12 +82,12 @@ function ProjectThumbnail({ project }: { project: Project }) {
   const imageUrl =
     project.original_screenshot_url || project.deliverables?.preview_url;
 
-  if (imageUrl) {
+  if (imageUrl && imageUrl !== "undefined") {
     return (
       <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-muted">
         <img
           src={imageUrl}
-          alt={`${project.company_name} preview`}
+          alt={`${project.company_name || "Project"} preview`}
           className="h-full w-full object-cover object-top transition-transform duration-500"
           style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
           loading="lazy"
@@ -142,7 +142,7 @@ function PipelineProgress({ status }: { status: string }) {
           style={{
             width: `${progress}%`,
             transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-            backgroundColor: "var(--primary)",
+            backgroundColor: status === "live" ? "#22c55e" : status === "review_ready" ? "#e85325" : status === "building" ? "#3b82f6" : "#e85325",
             opacity: status === "live" ? 1 : 0.7,
           }}
         />

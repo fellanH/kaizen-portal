@@ -72,13 +72,9 @@ export default function MessagesPage() {
   const grouped = useMemo(() => {
     const groups: Record<string, ProjectMessage[]> = {};
     for (const msg of filtered) {
-      const date = new Date(msg.created_at).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-      if (!groups[date]) groups[date] = [];
-      groups[date].push(msg);
+      const key = msg.company_name || "Unknown Project";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(msg);
     }
     return groups;
   }, [filtered]);
@@ -152,13 +148,15 @@ export default function MessagesPage() {
           </div>
         ) : (
           <div className="space-y-10">
-            {Object.entries(grouped).map(([date, msgs]) => (
-              <div key={date}>
+            {Object.entries(grouped).map(([projectName, msgs]) => (
+              <div key={projectName}>
                 <p
-                  className="mb-4 text-[0.6rem] font-medium uppercase text-muted-foreground/60"
-                  style={{ letterSpacing: "0.08em" }}
+                  className="mb-4 text-sm font-medium tracking-[-0.01em] text-foreground"
                 >
-                  {date}
+                  {projectName}
+                  <span className="ml-2 text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/50">
+                    {msgs.length} {msgs.length === 1 ? "message" : "messages"}
+                  </span>
                 </p>
                 <div className="space-y-1">
                   {msgs.map((msg, i) => (
@@ -171,14 +169,11 @@ export default function MessagesPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="mb-1 flex items-center gap-2.5">
-                            <span className="text-sm font-medium tracking-[-0.01em]">
-                              {msg.company_name}
-                            </span>
                             <span
                               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
                                 msg.from === "kaizen"
                                   ? "status-orange"
-                                  : "status-neutral"
+                                  : "bg-[#e85325]/10 text-[#e85325]"
                               }`}
                             >
                               {msg.from === "kaizen" ? "Kaizen" : "You"}
@@ -189,10 +184,12 @@ export default function MessagesPage() {
                           </p>
                         </div>
                         <span className="shrink-0 pt-0.5 text-xs text-muted-foreground/60">
-                          {new Date(msg.created_at).toLocaleTimeString("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
+                          {msg.created_at
+                            ? new Date(msg.created_at).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "Recently"}
                         </span>
                       </div>
                     </Link>

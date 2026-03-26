@@ -73,11 +73,12 @@ export interface ContractResponse {
   accepted_at: string | null;
 }
 
-export interface Project {
+/** Raw shape from intake-api. Fields: company, name, email (not company_name etc.) */
+interface ProjectRaw {
   token: string;
-  company_name: string;
-  contact_name: string;
-  contact_email: string;
+  company: string;
+  name: string;
+  email: string;
   tier: "starter" | "professional" | "premium";
   status: string;
   created_at: string;
@@ -93,6 +94,19 @@ export interface Project {
   contract_accepted?: boolean;
   contract_accepted_at?: string;
   original_screenshot_url?: string;
+}
+
+/** Normalized project with consistent field names used throughout the portal */
+export interface Project extends Omit<ProjectRaw, "company" | "name" | "email"> {
+  company_name: string;
+  contact_name: string;
+  contact_email: string;
+}
+
+/** Map API response to portal's expected shape */
+function normalizeProject(raw: ProjectRaw): Project {
+  const { company, name, email, ...rest } = raw;
+  return { ...rest, company_name: company || "Untitled", contact_name: name || "", contact_email: email || "" };
 }
 
 export interface Message {
@@ -150,12 +164,14 @@ export const api = {
     return request<AuthUser>("/auth/me");
   },
 
-  getMyProjects() {
-    return request<{ projects: Project[]; count: number }>("/my/projects");
+  async getMyProjects() {
+    const data = await request<{ projects: ProjectRaw[]; count: number }>("/my/projects");
+    return { projects: data.projects.map(normalizeProject), count: data.count };
   },
 
-  getProject(token: string) {
-    return request<Project>(`/project/${token}`);
+  async getProject(token: string) {
+    const raw = await request<ProjectRaw>(`/project/${token}`);
+    return normalizeProject(raw);
   },
 
   sendMessage(token: string, text: string) {

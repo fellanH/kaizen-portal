@@ -505,11 +505,7 @@ export default function AccountPage() {
           <PaymentHistorySection />
         </Section>
 
-        <Section label="Preferences" title="Notifications" delay={160}>
-          <NotificationPreferencesSection />
-        </Section>
-
-        <Section label="Collaboration" title="Team Access" delay={240}>
+        <Section label="Collaboration" title="Team Access" delay={160}>
           <TeamAccessSection />
         </Section>
 
