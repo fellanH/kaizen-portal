@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -24,7 +24,10 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { email, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [projectCount, setProjectCount] = useState<number | null>(null);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     api
@@ -138,10 +141,14 @@ export function AppSidebar() {
               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               title="Toggle theme"
             >
-              {theme === "dark" ? (
-                <Sun className="h-3.5 w-3.5" />
+              {mounted ? (
+                theme === "dark" ? (
+                  <Sun className="h-3.5 w-3.5" />
+                ) : (
+                  <Moon className="h-3.5 w-3.5" />
+                )
               ) : (
-                <Moon className="h-3.5 w-3.5" />
+                <span className="inline-block h-3.5 w-3.5" />
               )}
             </button>
             <button
