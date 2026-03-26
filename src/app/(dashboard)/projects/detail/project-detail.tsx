@@ -21,82 +21,13 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ChevronRight, ExternalLink } from "lucide-react";
-
-const STAGES = [
-  { key: "intake_received", label: "Received" },
-  { key: "spec_writing", label: "Spec Writing" },
-  { key: "building", label: "Building" },
-  { key: "review_ready", label: "Review Ready" },
-  { key: "live", label: "Live" },
-];
-
-function stageIndex(status: string) {
-  const idx = STAGES.findIndex((s) => s.key === status);
-  return idx === -1 ? 0 : idx;
-}
-
-function StatusTimeline({ status }: { status: string }) {
-  const current = stageIndex(status);
-
-  return (
-    <div className="flex items-center gap-1 overflow-x-auto py-2">
-      {STAGES.map((stage, i) => {
-        const isCompleted = i < current;
-        const isCurrent = i === current;
-
-        return (
-          <div key={stage.key} className="flex items-center">
-            <div className="flex flex-col items-center">
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors ${
-                  isCompleted
-                    ? "bg-primary text-primary-foreground"
-                    : isCurrent
-                      ? "border-2 border-primary bg-primary/20 text-primary"
-                      : "border border-muted-foreground/30 text-muted-foreground"
-                }`}
-              >
-                {isCompleted ? (
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                ) : (
-                  i + 1
-                )}
-              </div>
-              <span
-                className={`mt-1 text-[10px] whitespace-nowrap ${
-                  isCurrent
-                    ? "font-medium text-primary"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {stage.label}
-              </span>
-            </div>
-            {i < STAGES.length - 1 && (
-              <div
-                className={`mx-1 mb-4 h-0.5 w-6 ${
-                  i < current ? "bg-primary" : "bg-muted"
-                }`}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+import { ProjectProgressTracker } from "@/components/project-progress-tracker";
+import { ProjectDeliveryTimeline } from "@/components/project-delivery-timeline";
+import { ProjectSpecReader } from "@/components/project-spec-reader";
+import { ProjectContractViewer } from "@/components/project-contract-viewer";
+import { ProjectBeforeAfter } from "@/components/project-before-after";
+import { ProjectActivityFeed } from "@/components/project-activity-feed";
+import { ProjectCmsOnboarding } from "@/components/project-cms-onboarding";
 
 function MessageThread({
   messages,
@@ -304,16 +235,37 @@ export function ProjectDetail() {
       </div>
 
       <div className="space-y-6">
-        <Card>
+        {/* V2: Progress Tracker */}
+        <Card className="animate-stagger-up">
           <CardHeader>
             <CardTitle className="text-base">Progress</CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusTimeline status={project.status} />
+            <ProjectProgressTracker
+              status={project.status}
+              createdAt={project.created_at}
+              updatedAt={project.updated_at}
+              tier={project.tier}
+            />
           </CardContent>
         </Card>
 
-        <Card>
+        {/* V2: Delivery Timeline */}
+        <Card className="animate-stagger-up">
+          <CardHeader>
+            <CardTitle className="text-base">Expected Delivery</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProjectDeliveryTimeline
+              status={project.status}
+              createdAt={project.created_at}
+              tier={project.tier}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Overview */}
+        <Card className="animate-stagger-up">
           <CardHeader>
             <CardTitle className="text-base">Overview</CardTitle>
           </CardHeader>
@@ -341,28 +293,46 @@ export function ProjectDetail() {
           </CardContent>
         </Card>
 
+        {/* V2: Spec Reader */}
         {project.spec_content && (
-          <Card>
+          <Card className="animate-stagger-up">
             <CardHeader>
               <CardTitle className="text-base">Specification</CardTitle>
             </CardHeader>
             <CardContent>
-              <details>
-                <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                  View full spec
-                </summary>
-                <div className="mt-4 text-sm">
-                  <pre className="whitespace-pre-wrap rounded-md bg-muted p-4">
-                    {project.spec_content}
-                  </pre>
-                </div>
-              </details>
+              <ProjectSpecReader specContent={project.spec_content} />
             </CardContent>
           </Card>
         )}
 
+        {/* V2: Contract Viewer */}
+        <Card className="animate-stagger-up">
+          <CardHeader>
+            <CardTitle className="text-base">Contract</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProjectContractViewer token={token} />
+          </CardContent>
+        </Card>
+
+        {/* V2: Before/After Comparison */}
+        {project.original_screenshot_url && project.deliverables?.preview_url && (
+          <Card className="animate-stagger-up">
+            <CardHeader>
+              <CardTitle className="text-base">Before / After</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProjectBeforeAfter
+                originalUrl={project.original_screenshot_url}
+                previewUrl={project.deliverables.preview_url}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Preview */}
         {project.deliverables?.preview_url && (
-          <Card>
+          <Card className="animate-stagger-up">
             <CardHeader>
               <CardTitle className="text-base">Preview</CardTitle>
             </CardHeader>
@@ -372,8 +342,9 @@ export function ProjectDetail() {
           </Card>
         )}
 
+        {/* Review actions */}
         {showActions && (
-          <Card>
+          <Card className="animate-stagger-up">
             <CardHeader>
               <CardTitle className="text-base">Review</CardTitle>
             </CardHeader>
@@ -398,7 +369,22 @@ export function ProjectDetail() {
           </Card>
         )}
 
-        <Card>
+        {/* V2: CMS Onboarding Wizard */}
+        {project.deliverables?.sanity_studio_url && (
+          <Card className="animate-stagger-up">
+            <CardHeader>
+              <CardTitle className="text-base">CMS Setup</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProjectCmsOnboarding
+                sanityStudioUrl={project.deliverables.sanity_studio_url}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Messages */}
+        <Card className="animate-stagger-up">
           <CardHeader>
             <CardTitle className="text-base">Messages</CardTitle>
           </CardHeader>
@@ -410,8 +396,19 @@ export function ProjectDetail() {
           </CardContent>
         </Card>
 
+        {/* V2: Activity Feed */}
+        <Card className="animate-stagger-up">
+          <CardHeader>
+            <CardTitle className="text-base">Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProjectActivityFeed token={token} />
+          </CardContent>
+        </Card>
+
+        {/* Deliverables */}
         {project.deliverables?.urls && project.deliverables.urls.length > 0 && (
-          <Card>
+          <Card className="animate-stagger-up">
             <CardHeader>
               <CardTitle className="text-base">Deliverables</CardTitle>
             </CardHeader>
