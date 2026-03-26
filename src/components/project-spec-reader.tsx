@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Markdown from "react-markdown";
 
 function parseHeadings(content: string): { level: number; text: string; id: string }[] {
   const headings: { level: number; text: string; id: string }[] = [];
@@ -18,28 +19,17 @@ function parseHeadings(content: string): { level: number; text: string; id: stri
   return headings;
 }
 
-function renderMarkdown(content: string): string {
-  return content
-    .replace(/^### (.+)$/gm, '<h3 id="$1" class="text-sm font-medium tracking-tight mt-5 mb-1">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 id="$1" class="text-base font-light tracking-tight mt-6 mb-2">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 id="$1" class="text-lg font-light tracking-tight mt-8 mb-3">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`(.+?)`/g, '<code class="rounded bg-muted px-1.5 py-0.5 text-xs font-normal">$1</code>')
-    .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal">$2</li>')
-    .replace(/\n{2,}/g, '<div class="h-3"></div>')
-    .replace(
-      /(<h[123][^>]*>)/g,
-      (match) => {
-        const textMatch = match.match(/id="([^"]+)"/);
-        if (textMatch) {
-          const id = textMatch[1].toLowerCase().replace(/[^a-z0-9]+/g, "-");
-          return match.replace(/id="[^"]*"/, `id="${id}"`);
-        }
-        return match;
-      }
-    );
+function textContent(children: React.ReactNode): string {
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) return children.map(textContent).join("");
+  if (children && typeof children === "object" && "props" in children) {
+    return textContent((children as React.ReactElement<{ children?: React.ReactNode }>).props.children);
+  }
+  return "";
+}
+
+function headingId(children: React.ReactNode): string {
+  return textContent(children).toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
 export function ProjectSpecReader({ specContent }: { specContent: string }) {
@@ -47,11 +37,12 @@ export function ProjectSpecReader({ specContent }: { specContent: string }) {
   const [showToc, setShowToc] = useState(false);
 
   const headings = useMemo(() => parseHeadings(specContent), [specContent]);
-  const renderedHtml = useMemo(() => renderMarkdown(specContent), [specContent]);
 
   function handlePrint() {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
+    const contentEl = document.getElementById("spec-reader-content");
+    const safeHtml = contentEl?.innerHTML ?? "";
     printWindow.document.write(`
       <!DOCTYPE html>
       <html><head><title>Project Specification</title>
@@ -62,7 +53,7 @@ export function ProjectSpecReader({ specContent }: { specContent: string }) {
         li { margin-left: 1.5em; }
         @media print { body { margin: 0; } }
       </style></head>
-      <body>${renderedHtml}</body></html>
+      <body>${safeHtml}</body></html>
     `);
     printWindow.document.close();
     printWindow.print();
@@ -125,11 +116,33 @@ export function ProjectSpecReader({ specContent }: { specContent: string }) {
             </nav>
           )}
 
-          {/* Spec content */}
-          <div
-            className="prose prose-sm max-w-none flex-1 text-sm leading-[1.7]"
-            dangerouslySetInnerHTML={{ __html: renderedHtml }}
-          />
+          {/* Spec content - rendered safely via react-markdown */}
+          <div id="spec-reader-content" className="prose prose-sm max-w-none flex-1 text-sm leading-[1.7]">
+            <Markdown
+              components={{
+                h1: ({ children }) => (
+                  <h1 id={headingId(children)} className="text-lg font-light tracking-tight mt-8 mb-3">{children}</h1>
+                ),
+                h2: ({ children }) => (
+                  <h2 id={headingId(children)} className="text-base font-light tracking-tight mt-6 mb-2">{children}</h2>
+                ),
+                h3: ({ children }) => (
+                  <h3 id={headingId(children)} className="text-sm font-medium tracking-tight mt-5 mb-1">{children}</h3>
+                ),
+                code: ({ children }) => (
+                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-normal">{children}</code>
+                ),
+                li: ({ children, ...props }) => {
+                  const ordered = (props as Record<string, unknown>).ordered;
+                  return (
+                    <li className={ordered ? "ml-4 list-decimal" : "ml-4 list-disc"}>{children}</li>
+                  );
+                },
+              }}
+            >
+              {specContent}
+            </Markdown>
+          </div>
         </div>
       )}
     </div>

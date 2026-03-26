@@ -28,16 +28,28 @@ export function ProjectContractViewer({ token }: { token: string }) {
     }
   }
 
+  function escapeHtml(str: string): string {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   function handlePrint() {
     if (!data) return;
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     const sectionsHtml = data.contract.sections
-      .map((s) => `<h2>${s.title}</h2><p>${s.content}</p>`)
+      .map((s) => `<h2>${escapeHtml(s.title)}</h2><p>${escapeHtml(s.content)}</p>`)
       .join("");
+    const company = escapeHtml(data.contract.company);
+    const tier = escapeHtml(data.contract.tier);
+    const createdAt = new Date(data.contract.created_at).toLocaleDateString();
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html><head><title>Contract: ${data.contract.company}</title>
+      <html><head><title>Contract: ${company}</title>
       <style>
         body { font-family: system-ui, sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; font-size: 14px; }
         h1 { font-size: 1.3em; border-bottom: 2px solid #e85325; padding-bottom: 0.5em; }
@@ -47,7 +59,7 @@ export function ProjectContractViewer({ token }: { token: string }) {
       </style></head><body>
         <h1>Project Agreement</h1>
         <div class="meta">
-          <p>${data.contract.company} | ${data.contract.tier} tier | ${new Date(data.contract.created_at).toLocaleDateString()}</p>
+          <p>${company} | ${tier} tier | ${createdAt}</p>
         </div>
         ${sectionsHtml}
         ${data.accepted ? `<div class="accepted">Contract accepted on ${new Date(data.accepted_at!).toLocaleDateString()}</div>` : ""}
