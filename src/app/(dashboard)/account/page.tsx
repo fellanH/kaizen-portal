@@ -9,27 +9,7 @@ import {
   type Project,
   type Collaborator,
 } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -39,17 +19,9 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  CreditCard,
-  Bell,
-  ExternalLink,
-  Receipt,
-  Mail,
-  Users,
-  UserPlus,
-  Trash2,
-} from "lucide-react";
+import { ExternalLink, Trash2 } from "lucide-react";
 
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
@@ -58,16 +30,7 @@ function formatCurrency(amount: number, currency: string) {
   }).format(amount / 100);
 }
 
-function PaymentStatusBadge({ status }: { status: Payment["status"] }) {
-  const variant =
-    status === "succeeded"
-      ? "default"
-      : status === "pending"
-        ? "secondary"
-        : "destructive";
-  return <Badge variant={variant}>{status}</Badge>;
-}
-
+/* ── Payment History ── */
 function PaymentHistorySection() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,91 +45,102 @@ function PaymentHistorySection() {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <CreditCard className="h-4 w-4" />
-            Payment History
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-32 flex-1" />
-              <Skeleton className="h-4 w-16" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4">
+            <div className="h-4 w-20 ds-skeleton" />
+            <div className="h-4 w-32 flex-1 ds-skeleton" />
+            <div className="h-4 w-16 ds-skeleton" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (payments.length === 0) {
+    return (
+      <p className="py-6 text-sm text-muted-foreground">
+        No payments yet. Payments will appear here once invoiced.
+      </p>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <CreditCard className="h-4 w-4" />
-          Payment History
-        </CardTitle>
-        <CardDescription>
-          View your invoices and download receipts
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {payments.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <Receipt className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              No payments yet. Payments will appear here once invoiced.
-            </p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-10" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {payments.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(payment.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>{payment.description}</TableCell>
-                  <TableCell className="font-medium">
-                    {formatCurrency(payment.amount, payment.currency)}
-                  </TableCell>
-                  <TableCell>
-                    <PaymentStatusBadge status={payment.status} />
-                  </TableCell>
-                  <TableCell>
-                    {payment.receipt_url && (
-                      <a
-                        href={payment.receipt_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-primary hover:underline"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border/60">
+            <th className="pb-3 text-left text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+              Date
+            </th>
+            <th className="pb-3 text-left text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+              Description
+            </th>
+            <th className="pb-3 text-left text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+              Amount
+            </th>
+            <th className="pb-3 text-left text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+              Status
+            </th>
+            <th className="w-10 pb-3" />
+          </tr>
+        </thead>
+        <tbody>
+          {payments.map((payment) => (
+            <tr
+              key={payment.id}
+              className="border-b border-border/30 last:border-0"
+            >
+              <td className="py-3 text-muted-foreground">
+                {new Date(payment.created_at).toLocaleDateString()}
+              </td>
+              <td className="py-3">{payment.description}</td>
+              <td className="py-3 font-medium">
+                {formatCurrency(payment.amount, payment.currency)}
+              </td>
+              <td className="py-3">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    payment.status === "succeeded"
+                      ? "status-emerald"
+                      : payment.status === "pending"
+                        ? "status-neutral"
+                        : "status-red"
+                  }`}
+                >
+                  <span
+                    className={`h-1 w-1 rounded-full ${
+                      payment.status === "succeeded"
+                        ? "bg-emerald-500"
+                        : payment.status === "pending"
+                          ? "bg-muted-foreground/60"
+                          : "bg-red-500"
+                    }`}
+                  />
+                  {payment.status}
+                </span>
+              </td>
+              <td className="py-3">
+                {payment.receipt_url && (
+                  <a
+                    href={payment.receipt_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground transition-colors duration-200 hover:text-foreground"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
+/* ── Notification Preferences ── */
 function NotificationPreferencesSection() {
   const [prefs, setPrefs] = useState<NotificationPreferences>({
     stage_changes: true,
@@ -228,63 +202,45 @@ function NotificationPreferencesSection() {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Bell className="h-4 w-4" />
-            Notification Preferences
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-3 w-48" />
-              </div>
-              <Skeleton className="h-5 w-9 rounded-full" />
+      <div className="space-y-5">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-center justify-between">
+            <div className="space-y-1.5">
+              <div className="h-4 w-28 ds-skeleton" />
+              <div className="h-3 w-48 ds-skeleton" />
             </div>
-          ))}
-        </CardContent>
-      </Card>
+            <div className="h-5 w-9 rounded-full ds-skeleton" />
+          </div>
+        ))}
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Bell className="h-4 w-4" />
-          Notification Preferences
-        </CardTitle>
-        <CardDescription>
-          Choose which email notifications you receive
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {items.map((item) => (
-          <div
-            key={item.key}
-            className="flex items-center justify-between gap-4"
-          >
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium">{item.label}</p>
-              <p className="text-xs text-muted-foreground">
-                {item.description}
-              </p>
-            </div>
-            <Switch
-              checked={prefs[item.key]}
-              onCheckedChange={() => toggle(item.key)}
-              disabled={saving}
-            />
+    <div className="space-y-5">
+      {items.map((item) => (
+        <div
+          key={item.key}
+          className="flex items-center justify-between gap-4"
+        >
+          <div className="space-y-0.5">
+            <p className="text-sm font-light">{item.label}</p>
+            <p className="text-xs text-muted-foreground">
+              {item.description}
+            </p>
           </div>
-        ))}
-      </CardContent>
-    </Card>
+          <Switch
+            checked={prefs[item.key]}
+            onCheckedChange={() => toggle(item.key)}
+            disabled={saving}
+          />
+        </div>
+      ))}
+    </div>
   );
 }
 
+/* ── Team Access ── */
 function TeamAccessSection() {
   const { email } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -348,199 +304,242 @@ function TeamAccessSection() {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="h-4 w-4" />
-            Team Access
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="space-y-2">
+            <div className="h-4 w-32 ds-skeleton" />
+            <div className="h-4 w-48 ds-skeleton" />
+          </div>
+        ))}
+      </div>
     );
   }
 
   if (projects.length === 0) return null;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Users className="h-4 w-4" />
-          Team Access
-        </CardTitle>
-        <CardDescription>
-          Invite collaborators to view your projects
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {projects.map((project) => {
-          const projectCollabs = collabs[project.token] || [];
-          const isOwner = project.contact_email === email;
-          return (
-            <div key={project.token} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">{project.company_name}</p>
-                {isOwner && (
-                  <Dialog
-                    open={inviteToken === project.token}
-                    onOpenChange={(open) => {
-                      if (!open) {
-                        setInviteToken(null);
-                        setInviteEmail("");
-                      }
-                    }}
-                  >
-                    <DialogTrigger
-                      render={
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setInviteToken(project.token)}
-                        />
-                      }
-                    >
-                      <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                      Invite
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>
-                          Invite to {project.company_name}
-                        </DialogTitle>
-                        <DialogDescription>
-                          Send a magic link to a collaborator. They will get
-                          read-only access to this project.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <Input
-                        type="email"
-                        placeholder="colleague@company.com"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleInvite();
-                        }}
+    <div className="space-y-5">
+      {projects.map((project) => {
+        const projectCollabs = collabs[project.token] || [];
+        const isOwner = project.contact_email === email;
+        return (
+          <div key={project.token} className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-light">{project.company_name}</p>
+              {isOwner && (
+                <Dialog
+                  open={inviteToken === project.token}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setInviteToken(null);
+                      setInviteEmail("");
+                    }
+                  }}
+                >
+                  <DialogTrigger
+                    render={
+                      <button
+                        onClick={() => setInviteToken(project.token)}
+                        className="group inline-flex items-center text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"
                       />
-                      <DialogFooter>
-                        <Button
-                          onClick={handleInvite}
-                          disabled={!inviteEmail.trim() || inviting}
-                        >
+                    }
+                  >
+                    <span className="relative">
+                      Invite
+                      <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-0 group-hover:scale-x-100" />
+                    </span>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="font-light tracking-[-0.02em]">
+                        Invite to {project.company_name}
+                      </DialogTitle>
+                      <DialogDescription>
+                        Send a magic link to a collaborator. They will get
+                        read-only access to this project.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <input
+                      type="email"
+                      placeholder="colleague@company.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleInvite();
+                      }}
+                      className="w-full border-0 border-b border-border/60 bg-transparent px-0 py-2.5 text-sm text-foreground placeholder-muted-foreground/40 outline-none transition-colors duration-300 focus:border-primary/60"
+                      style={{ fontFamily: "var(--font-aspekta)" }}
+                    />
+                    <DialogFooter>
+                      <button
+                        onClick={handleInvite}
+                        disabled={!inviteEmail.trim() || inviting}
+                        className="group inline-flex items-center gap-2 text-sm text-foreground transition-all duration-200 disabled:opacity-30"
+                      >
+                        <span className="relative">
                           {inviting ? "Sending..." : "Send invite"}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                )}
-              </div>
-              {projectCollabs.length > 0 ? (
-                <div className="space-y-1">
-                  {projectCollabs.map((c) => (
-                    <div
-                      key={c.email}
-                      className="flex items-center justify-between rounded-md border border-border/50 px-3 py-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{c.email}</span>
-                        <Badge variant="outline" className="text-[10px]">
-                          {c.role}
-                        </Badge>
-                      </div>
-                      {isOwner && c.role !== "owner" && (
-                        <button
-                          onClick={() =>
-                            handleRemove(project.token, c.email)
-                          }
-                          className="text-muted-foreground transition-colors hover:text-destructive"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  No collaborators yet
-                </p>
+                          <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary" />
+                        </span>
+                      </button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               )}
             </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+            {projectCollabs.length > 0 ? (
+              <div className="space-y-1.5">
+                {projectCollabs.map((c) => (
+                  <div
+                    key={c.email}
+                    className="flex items-center justify-between rounded-lg border border-border/40 px-4 py-2.5"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-sm">{c.email}</span>
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium status-neutral">
+                        {c.role}
+                      </span>
+                    </div>
+                    {isOwner && c.role !== "owner" && (
+                      <button
+                        onClick={() =>
+                          handleRemove(project.token, c.email)
+                        }
+                        className="text-muted-foreground/60 transition-colors duration-200 hover:text-foreground"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                No collaborators yet
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
+/* ── Section wrapper ── */
+function Section({
+  label,
+  title,
+  children,
+  delay = 0,
+}: {
+  label: string;
+  title: string;
+  children: React.ReactNode;
+  delay?: number;
+}) {
+  return (
+    <div className="ds-section" style={{ animationDelay: `${delay}ms` }}>
+      <div className="ds-rule mb-6" />
+      <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+        {label}
+      </p>
+      <h2 className="mt-1 mb-5 text-lg font-light tracking-[-0.02em]">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+/* ── Main Page ── */
 export default function AccountPage() {
   const { email, logout } = useAuth();
 
+  const initials = email
+    ? email
+        .split("@")[0]
+        .split(/[._-]/)
+        .map((s) => s[0]?.toUpperCase() || "")
+        .join("")
+        .slice(0, 2)
+    : "?";
+
   return (
-    <div className="p-4 sm:p-6">
-      <h1 className="mb-6 text-2xl font-bold">Account</h1>
+    <div className="mx-auto max-w-2xl px-6 py-10 sm:px-8 sm:py-14">
+      {/* Page header */}
+      <div className="kaizen-enter-1 space-y-4">
+        <div>
+          <p
+            className="text-[0.6rem] font-medium uppercase text-muted-foreground/60"
+            style={{ letterSpacing: "0.08em" }}
+          >
+            Settings
+          </p>
+          <h1
+            className="mt-1 text-[clamp(1.75rem,1.14vw+1.5rem,2.5rem)] font-light tracking-tight text-foreground"
+            style={{ letterSpacing: "-0.03em", lineHeight: "1.1" }}
+          >
+            Account
+          </h1>
+        </div>
+        <div className="kaizen-line h-px bg-border" />
+      </div>
 
-      <div className="max-w-2xl space-y-6">
-        <Card className="animate-stagger-up">
-          <CardHeader>
-            <CardTitle className="text-base">Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Mail className="h-5 w-5" />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground">Email</label>
-                  <p className="font-medium">{email}</p>
-                </div>
-              </div>
+      {/* Content */}
+      <div className="mt-10 space-y-10">
+        {/* Profile */}
+        <div className="ds-section">
+          <div className="ds-rule mb-6" />
+          <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+            Profile
+          </p>
+          <div className="mt-5 flex items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+              {initials}
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-sm font-light">{email?.split("@")[0]}</p>
+              <p className="text-xs text-muted-foreground">{email}</p>
+            </div>
+          </div>
+        </div>
 
-        <div className="animate-stagger-up" style={{ animationDelay: "80ms" }}>
+        <Section label="Billing" title="Payment History" delay={80}>
           <PaymentHistorySection />
-        </div>
+        </Section>
 
-        <div className="animate-stagger-up" style={{ animationDelay: "160ms" }}>
+        <Section label="Preferences" title="Notifications" delay={160}>
           <NotificationPreferencesSection />
-        </div>
+        </Section>
 
-        <div className="animate-stagger-up" style={{ animationDelay: "240ms" }}>
+        <Section label="Collaboration" title="Team Access" delay={240}>
           <TeamAccessSection />
-        </div>
+        </Section>
 
-        <Card className="animate-stagger-up" style={{ animationDelay: "320ms" }}>
-          <CardHeader>
-            <CardTitle className="text-base">Support</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Need help? Reach out to us at{" "}
-              <a
-                href="mailto:hello@hi-kaizen.com"
-                className="text-primary hover:underline"
-              >
+        <Section label="Help" title="Support" delay={320}>
+          <p className="text-sm leading-[1.7] text-muted-foreground">
+            Need help? Reach out to us at{" "}
+            <a
+              href="mailto:hello@hi-kaizen.com"
+              className="group inline-flex items-center text-foreground transition-colors duration-200"
+            >
+              <span className="relative">
                 hello@hi-kaizen.com
-              </a>
-            </p>
-          </CardContent>
-        </Card>
+                <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-100 group-hover:scale-x-0" />
+              </span>
+            </a>
+          </p>
+        </Section>
 
-        <Separator />
-
-        <Button variant="destructive" onClick={logout}>
-          Log out
-        </Button>
+        {/* Logout */}
+        <div className="ds-section border-t border-border/40 pt-8" style={{ animationDelay: "400ms" }}>
+          <button
+            onClick={logout}
+            className="group inline-flex items-center text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
+          >
+            <span className="relative">
+              Log out
+              <span className="absolute inset-x-0 -bottom-px h-px bg-muted-foreground/30 transition-colors duration-200 group-hover:bg-primary" />
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   );

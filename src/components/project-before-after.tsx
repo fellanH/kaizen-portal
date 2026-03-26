@@ -43,7 +43,7 @@ export function ProjectBeforeAfter({
       {/* Desktop: slider comparison */}
       <div
         ref={containerRef}
-        className="comparison-enter relative hidden aspect-video w-full cursor-col-resize overflow-hidden rounded-lg border md:block"
+        className="comparison-enter relative hidden aspect-video w-full cursor-col-resize overflow-hidden rounded-lg border border-border/60 md:block"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -69,21 +69,21 @@ export function ProjectBeforeAfter({
 
         {/* Slider handle */}
         <div
-          className="absolute top-0 bottom-0 z-10 w-0.5 bg-foreground"
+          className="absolute top-0 bottom-0 z-10 w-0.5 bg-foreground/80"
           style={{ left: `${sliderPos}%` }}
         >
-          <div className="absolute top-1/2 left-1/2 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-foreground bg-background shadow-md">
-            <svg className="h-4 w-4 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l-3 3 3 3m8-6l3 3-3 3" />
+          <div className="absolute top-1/2 left-1/2 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background shadow-sm">
+            <svg className="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l-3 3 3 3m8-6l3 3-3 3" />
             </svg>
           </div>
         </div>
 
         {/* Labels */}
-        <div className="pointer-events-none absolute top-3 left-3 z-10 rounded bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
+        <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-full bg-background/80 px-2.5 py-0.5 text-[10px] font-medium text-foreground backdrop-blur-sm">
           Before
         </div>
-        <div className="pointer-events-none absolute top-3 right-3 z-10 rounded bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
+        <div className="pointer-events-none absolute top-3 right-3 z-10 rounded-full bg-background/80 px-2.5 py-0.5 text-[10px] font-medium text-foreground backdrop-blur-sm">
           After
         </div>
       </div>
@@ -91,8 +91,8 @@ export function ProjectBeforeAfter({
       {/* Mobile: stacked */}
       <div className="space-y-3 md:hidden">
         <div>
-          <p className="mb-1 text-xs font-medium text-muted-foreground">Before</p>
-          <div className="aspect-video overflow-hidden rounded-lg border">
+          <p className="mb-1.5 text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">Before</p>
+          <div className="aspect-video overflow-hidden rounded-lg border border-border/60">
             <iframe
               src={originalUrl}
               className="h-full w-full border-0"
@@ -101,8 +101,8 @@ export function ProjectBeforeAfter({
           </div>
         </div>
         <div>
-          <p className="mb-1 text-xs font-medium text-muted-foreground">After</p>
-          <div className="aspect-video overflow-hidden rounded-lg border">
+          <p className="mb-1.5 text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">After</p>
+          <div className="aspect-video overflow-hidden rounded-lg border border-border/60">
             <iframe
               src={previewUrl}
               className="h-full w-full border-0"

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 
 const STEPS = [
   {
@@ -49,22 +48,22 @@ export function ProjectCmsOnboarding({
   const allDone = completedSteps.size === STEPS.length;
 
   return (
-    <div className="cms-onboarding-enter space-y-4">
+    <div className="cms-onboarding-enter space-y-5">
       <div className="flex items-start justify-between">
         <div>
-          <h4 className="text-sm font-medium">Get started with your CMS</h4>
-          <p className="text-xs text-muted-foreground">
-            Learn to edit your website content in 4 steps
+          <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+            Getting started
           </p>
+          <h4 className="mt-1 text-sm font-light tracking-[-0.01em]">
+            Set up your CMS in 4 steps
+          </h4>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={() => setDismissed(true)}
-          className="text-xs text-muted-foreground"
+          className="text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"
         >
           Dismiss
-        </Button>
+        </button>
       </div>
 
       <div className="space-y-2">
@@ -75,20 +74,19 @@ export function ProjectCmsOnboarding({
           return (
             <div
               key={i}
-              className={`rounded-lg border p-3 transition-colors duration-300 ${
+              className={`rounded-lg border p-4 transition-colors duration-300 ${
                 isCurrent
-                  ? "border-primary/50 bg-primary/5"
+                  ? "border-primary/30 bg-primary/5"
                   : isComplete
-                    ? "border-transparent bg-muted/50"
+                    ? "border-border/40 bg-muted/30"
                     : "border-transparent"
               }`}
             >
               <div className="flex items-start gap-3">
-                {/* Step indicator */}
                 <div
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium transition-all duration-300 ${
                     isComplete
-                      ? "bg-green-600 text-white step-complete"
+                      ? "bg-emerald-600 text-white step-complete"
                       : isCurrent
                         ? "border-2 border-primary text-primary"
                         : "border border-muted-foreground/30 text-muted-foreground"
@@ -104,23 +102,24 @@ export function ProjectCmsOnboarding({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className={`text-sm ${isCurrent ? "font-medium" : ""}`}>
+                  <p className={`text-sm ${isCurrent ? "font-medium" : "font-light"}`}>
                     {step.title}
                   </p>
                   {(isCurrent || isComplete) && (
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    <p className="mt-1.5 text-xs leading-[1.7] text-muted-foreground">
                       {step.description}
                     </p>
                   )}
                   {isCurrent && !isComplete && (
-                    <Button
-                      size="sm"
-                      variant="outline"
+                    <button
                       onClick={() => markComplete(i)}
-                      className="mt-2 text-xs"
+                      className="group mt-3 inline-flex items-center text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"
                     >
-                      Mark as done
-                    </Button>
+                      <span className="relative">
+                        Mark as done
+                        <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-0 group-hover:scale-x-100" />
+                      </span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -134,17 +133,21 @@ export function ProjectCmsOnboarding({
         href={sanityStudioUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-block"
+        className="group inline-flex items-center gap-2 text-sm text-foreground transition-all duration-200"
       >
-        <Button variant="outline" size="sm" className="text-xs">
+        <span className="relative">
           Open Sanity Studio
-        </Button>
+          <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary" />
+        </span>
+        <svg className="h-3.5 w-3.5 text-primary transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
       </a>
 
       {allDone && (
-        <div className="rounded-lg bg-green-600/10 p-3 text-center">
-          <p className="text-sm font-medium text-green-600">
-            You're all set! You can now manage your website content.
+        <div className="rounded-lg status-emerald p-4 text-center">
+          <p className="text-sm font-light">
+            All set. You can now manage your website content.
           </p>
         </div>
       )}

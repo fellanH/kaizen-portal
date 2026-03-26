@@ -26,8 +26,10 @@ export function ProjectProgressTracker({
 }) {
   const current = stageIndex(status);
   const totalStages = STAGES.length;
-  const completionPercent = Math.round(
-    ((status === "live" ? totalStages : current) / (totalStages - 1)) * 100
+  /* B1 fix: cap at 100% */
+  const completionPercent = Math.min(
+    Math.round((current / (totalStages - 1)) * 100),
+    100
   );
 
   const tierDays: Record<string, number> = {
@@ -45,7 +47,7 @@ export function ProjectProgressTracker({
           <span>Overall progress</span>
           <span className="font-medium text-foreground">{completionPercent}%</span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
             className="progress-bar-fill h-full rounded-full bg-primary"
             style={{ width: `${completionPercent}%` }}
@@ -63,7 +65,6 @@ export function ProjectProgressTracker({
           return (
             <div key={stage.key} className="flex flex-1 flex-col items-center">
               <div className="relative flex items-center justify-center">
-                {/* Connecting line (before the circle) */}
                 {i > 0 && (
                   <div
                     className={`absolute right-1/2 top-1/2 h-0.5 -translate-y-1/2 ${
@@ -80,7 +81,7 @@ export function ProjectProgressTracker({
                 <div
                   className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-xs font-medium transition-all duration-500 ${
                     isCompleted || isLive
-                      ? "bg-primary text-primary-foreground stage-complete"
+                      ? "bg-emerald-600 text-white stage-complete"
                       : isCurrent
                         ? "border-2 border-primary bg-primary/15 text-primary stage-active"
                         : "border border-muted-foreground/30 text-muted-foreground"

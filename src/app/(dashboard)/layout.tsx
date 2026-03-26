@@ -3,7 +3,6 @@
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AuthGuard } from "@/components/auth-guard";
-import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function DashboardLayout({
@@ -19,10 +18,14 @@ export default function DashboardLayout({
         <AppSidebar />
         <SidebarInset>
           {isMobile && (
-            <header className="flex h-12 items-center gap-2 border-b border-border px-4">
+            <header className="flex h-12 items-center gap-3 border-b border-border/60 px-5">
               <SidebarTrigger />
-              <Separator orientation="vertical" className="h-4" />
-              <span className="text-sm font-semibold text-primary">Kaizen</span>
+              <span
+                className="text-sm font-light tracking-tight text-primary"
+                style={{ letterSpacing: "-0.03em", fontFamily: "var(--font-aspekta)" }}
+              >
+                Kaizen
+              </span>
             </header>
           )}
           <main className="flex-1">{children}</main>

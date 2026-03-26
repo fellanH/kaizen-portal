@@ -2,16 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { api, type ProjectEvent } from "@/lib/api";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 
 const EVENT_ICONS: Record<string, string> = {
-  stage_change: "🔄",
-  message: "💬",
-  deliverable: "📦",
-  spec_update: "📝",
-  approval: "✅",
-  invite: "👤",
+  stage_change: "~",
+  message: "m",
+  deliverable: "d",
+  spec_update: "s",
+  approval: "a",
+  invite: "i",
 };
 
 const ACTOR_LABELS: Record<string, string> = {
@@ -51,13 +49,13 @@ export function ProjectActivityFeed({ token }: { token: string }) {
 
   if (loading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="flex gap-3">
-            <Skeleton className="h-6 w-6 rounded-full" />
-            <div className="flex-1 space-y-1">
-              <Skeleton className="h-3 w-3/4" />
-              <Skeleton className="h-2 w-1/4" />
+            <div className="h-6 w-6 rounded-full ds-skeleton" />
+            <div className="flex-1 space-y-1.5">
+              <div className="h-3 w-3/4 ds-skeleton" />
+              <div className="h-2 w-1/4 ds-skeleton" />
             </div>
           </div>
         ))}
@@ -67,7 +65,7 @@ export function ProjectActivityFeed({ token }: { token: string }) {
 
   if (events.length === 0) {
     return (
-      <p className="py-4 text-center text-sm text-muted-foreground">
+      <p className="py-6 text-center text-sm text-muted-foreground">
         No activity yet.
       </p>
     );
@@ -79,16 +77,16 @@ export function ProjectActivityFeed({ token }: { token: string }) {
     <div className="space-y-1">
       <div className="relative">
         {/* Vertical line */}
-        <div className="absolute top-0 bottom-0 left-3 w-px bg-border" />
+        <div className="absolute top-0 bottom-0 left-3 w-px bg-border/60" />
 
         {displayed.map((event, i) => (
           <div
             key={i}
-            className="activity-item relative flex gap-3 py-2 pl-1"
+            className="activity-item relative flex gap-3 py-2.5 pl-1"
             style={{ animationDelay: `${i * 50}ms` }}
           >
             {/* Icon dot */}
-            <div className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-background text-xs ring-1 ring-border">
+            <div className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-background text-[10px] font-medium uppercase tracking-wide text-muted-foreground ring-1 ring-border/60">
               {EVENT_ICONS[event.type] || "·"}
             </div>
 
@@ -104,14 +102,15 @@ export function ProjectActivityFeed({ token }: { token: string }) {
       </div>
 
       {events.length > 5 && !showAll && (
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={() => setShowAll(true)}
-          className="w-full text-xs"
+          className="group mt-2 inline-flex w-full items-center justify-center text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"
         >
-          Show all {total} events
-        </Button>
+          <span className="relative">
+            Show all {total} events
+            <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-0 group-hover:scale-x-100" />
+          </span>
+        </button>
       )}
     </div>
   );

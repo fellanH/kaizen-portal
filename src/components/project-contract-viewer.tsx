@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { api, type ContractResponse } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export function ProjectContractViewer({ token }: { token: string }) {
   const [data, setData] = useState<ContractResponse | null>(null);
@@ -63,8 +60,8 @@ export function ProjectContractViewer({ token }: { token: string }) {
   if (loading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-4 w-1/3" />
-        <Skeleton className="h-20 w-full" />
+        <div className="h-4 w-1/3 ds-skeleton" />
+        <div className="h-20 w-full ds-skeleton" />
       </div>
     );
   }
@@ -75,49 +72,68 @@ export function ProjectContractViewer({ token }: { token: string }) {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Badge
-            variant={data.accepted ? "default" : "secondary"}
-            className={data.accepted ? "bg-green-600 text-white" : ""}
+        <div className="flex items-center gap-3">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+              data.accepted
+                ? "status-emerald"
+                : "status-neutral"
+            }`}
           >
+            <span className={`h-1.5 w-1.5 rounded-full ${data.accepted ? "bg-emerald-500" : "bg-muted-foreground/60"}`} />
             {data.accepted ? "Accepted" : "Pending"}
-          </Badge>
+          </span>
           {data.accepted && data.accepted_at && (
             <span className="text-xs text-muted-foreground">
               {new Date(data.accepted_at).toLocaleDateString()}
             </span>
           )}
         </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={handlePrint} className="text-xs">
-            Download PDF
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+        <div className="flex items-center gap-3">
+          {/* B4 fix: only show Download PDF for accepted contracts */}
+          {data.accepted && (
+            <button
+              onClick={handlePrint}
+              className="group inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"
+            >
+              <span className="relative">
+                Download PDF
+                <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-0 group-hover:scale-x-100" />
+              </span>
+            </button>
+          )}
+          <button
             onClick={() => setExpanded(!expanded)}
-            className="text-xs"
+            className="group inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"
           >
-            {expanded ? "Collapse" : "View"}
-          </Button>
+            <span className="relative">
+              {expanded ? "Collapse" : "View contract"}
+              <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-0 group-hover:scale-x-100" />
+            </span>
+          </button>
         </div>
       </div>
 
       {/* Contract sections */}
       {expanded && (
-        <div className="contract-enter space-y-4 rounded-lg border bg-card p-4">
-          <div className="border-b pb-3">
-            <h3 className="text-sm font-semibold">Project Agreement</h3>
-            <p className="text-xs text-muted-foreground">
-              {data.contract.company} | {data.contract.tier} tier |{" "}
+        <div className="contract-enter space-y-5 rounded-lg border border-border/60 bg-card p-6">
+          <div className="border-b border-border/60 pb-4">
+            <p className="text-[0.65rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+              Agreement
+            </p>
+            <h3 className="mt-1 text-base font-light tracking-[-0.02em]">
+              Project Agreement
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {data.contract.company} · {data.contract.tier} tier ·{" "}
               {new Date(data.contract.created_at).toLocaleDateString()}
             </p>
           </div>
 
           {data.contract.sections.map((section, i) => (
             <div key={i}>
-              <h4 className="text-sm font-medium">{section.title}</h4>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              <h4 className="text-sm font-medium tracking-[-0.01em]">{section.title}</h4>
+              <p className="mt-1.5 text-sm leading-[1.7] text-muted-foreground">
                 {section.content}
               </p>
             </div>
@@ -125,13 +141,25 @@ export function ProjectContractViewer({ token }: { token: string }) {
 
           {/* Accept button */}
           {!data.accepted && (
-            <div className="border-t pt-4">
-              <p className="mb-3 text-xs text-muted-foreground">
-                By clicking "I Accept", you agree to the terms outlined above.
+            <div className="border-t border-border/60 pt-5">
+              <p className="mb-4 text-xs text-muted-foreground">
+                By clicking below, you agree to the terms outlined above.
               </p>
-              <Button onClick={handleAccept} disabled={accepting} size="sm">
-                {accepting ? "Accepting..." : "I Accept"}
-              </Button>
+              <button
+                onClick={handleAccept}
+                disabled={accepting}
+                className="group inline-flex items-center gap-2 text-sm text-foreground transition-all duration-200 disabled:opacity-30"
+              >
+                <span className="relative">
+                  {accepting ? "Accepting..." : "I Accept"}
+                  <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary" />
+                </span>
+                {!accepting && (
+                  <svg className="h-3.5 w-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
             </div>
           )}
         </div>

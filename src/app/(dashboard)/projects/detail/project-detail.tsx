@@ -4,15 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, type Project, type Message } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -20,8 +11,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ChevronRight, ExternalLink } from "lucide-react";
-import { ProjectProgressTracker } from "@/components/project-progress-tracker";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 import { ProjectDeliveryTimeline } from "@/components/project-delivery-timeline";
 import { ProjectSpecReader } from "@/components/project-spec-reader";
 import { ProjectContractViewer } from "@/components/project-contract-viewer";
@@ -29,6 +20,22 @@ import { ProjectBeforeAfter } from "@/components/project-before-after";
 import { ProjectActivityFeed } from "@/components/project-activity-feed";
 import { ProjectCmsOnboarding } from "@/components/project-cms-onboarding";
 
+/* ── Status config with semantic colors (B5 fix) ── */
+const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
+  intake_received: { label: "Received", className: "status-neutral", dot: "bg-muted-foreground/60" },
+  spec_writing: { label: "Scoping", className: "status-amber", dot: "bg-amber-500" },
+  building: { label: "Building", className: "status-blue", dot: "bg-blue-500" },
+  review_ready: { label: "Review Ready", className: "status-orange", dot: "bg-primary" },
+  live: { label: "Delivered", className: "status-emerald", dot: "bg-emerald-500" },
+};
+
+const tierLabels: Record<string, string> = {
+  starter: "Starter",
+  professional: "Professional",
+  premium: "Premium",
+};
+
+/* ── Message Thread ── */
 function MessageThread({
   messages,
   onSend,
@@ -49,46 +56,42 @@ function MessageThread({
 
   return (
     <div className="space-y-4">
-      <div className="max-h-80 space-y-3 overflow-y-auto">
+      <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
         {messages.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
+          <p className="py-6 text-center text-sm text-muted-foreground">
             No messages yet.
           </p>
         ) : (
-          messages.map((msg) => (
+          messages.map((msg, i) => (
             <div
               key={msg.id}
-              className={`flex ${msg.from === "client" ? "justify-end" : "justify-start"}`}
+              className={`msg-bubble flex ${msg.from === "client" ? "justify-end" : "justify-start"}`}
+              style={{ animationDelay: `${i * 40}ms` }}
             >
               <div
-                className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-[1.6] ${
                   msg.from === "client"
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary/10 text-foreground"
                     : "bg-muted text-foreground"
                 }`}
               >
                 <p>{msg.text}</p>
-                <p
-                  className={`mt-1 text-[10px] ${
-                    msg.from === "client"
-                      ? "text-primary-foreground/60"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {new Date(msg.created_at).toLocaleString()}
+                <p className="mt-1.5 text-[10px] text-muted-foreground">
+                  {msg.from === "kaizen" ? "Kaizen" : "You"} · {new Date(msg.created_at).toLocaleString()}
                 </p>
               </div>
             </div>
           ))
         )}
       </div>
-      <div className="flex gap-2">
-        <Textarea
+      <div className="flex gap-3 border-t border-border/60 pt-4">
+        <input
+          type="text"
           placeholder="Type a message..."
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="min-h-[44px] resize-none"
-          rows={1}
+          className="flex-1 border-0 border-b border-border/60 bg-transparent px-0 py-2 text-sm text-foreground placeholder-muted-foreground/40 outline-none transition-colors duration-300 focus:border-primary/60"
+          style={{ fontFamily: "var(--font-aspekta)" }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -96,47 +99,61 @@ function MessageThread({
             }
           }}
         />
-        <Button onClick={handleSend} disabled={sending || !text.trim()}>
-          Send
-        </Button>
+        <button
+          onClick={handleSend}
+          disabled={sending || !text.trim()}
+          className="group inline-flex items-center gap-2 text-sm text-foreground transition-all duration-200 disabled:opacity-30"
+        >
+          <span className="relative">
+            Send
+            <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary" />
+          </span>
+          <svg className="h-3.5 w-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </button>
       </div>
     </div>
   );
 }
 
+/* ── Preview Frame ── */
 function PreviewFrame({ url }: { url: string }) {
-  const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">(
-    "desktop"
-  );
-
+  const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">("desktop");
   const widths = { mobile: 375, tablet: 768, desktop: 1280 };
 
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
         {(["mobile", "tablet", "desktop"] as const).map((v) => (
-          <Button
+          <button
             key={v}
-            variant={viewport === v ? "default" : "outline"}
-            size="sm"
             onClick={() => setViewport(v)}
+            className={`text-xs transition-colors duration-200 ${
+              viewport === v
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
           >
-            {v.charAt(0).toUpperCase() + v.slice(1)}
-          </Button>
+            <span className="relative">
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+              {viewport === v && (
+                <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary" />
+              )}
+            </span>
+          </button>
         ))}
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-auto"
+          className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"
         >
-          <Button variant="ghost" size="sm">
-            <ExternalLink className="mr-1 h-3 w-3" />
-            Open
-          </Button>
+          <ExternalLink className="h-3 w-3" />
+          Open
         </a>
       </div>
-      <div className="flex justify-center overflow-hidden rounded-lg border bg-white">
+      <div className="flex justify-center overflow-hidden rounded-lg border border-border/60 bg-muted/30">
         <iframe
           src={url}
           className="h-[600px] border-0"
@@ -148,6 +165,57 @@ function PreviewFrame({ url }: { url: string }) {
   );
 }
 
+/* ── Section wrapper ── */
+function Section({
+  label,
+  title,
+  children,
+}: {
+  label?: string;
+  title?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="ds-section">
+      <div className="ds-rule mb-6" />
+      {label && (
+        <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+          {label}
+        </p>
+      )}
+      {title && (
+        <h2 className="mt-1 mb-5 text-lg font-light tracking-[-0.02em]">{title}</h2>
+      )}
+      {!title && label && <div className="mb-5" />}
+      {children}
+    </div>
+  );
+}
+
+/* ── Loading skeleton ── */
+function DetailSkeleton() {
+  return (
+    <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8 sm:py-14">
+      <div className="space-y-3">
+        <div className="h-3 w-20 ds-skeleton" />
+        <div className="h-10 w-2/3 ds-skeleton" />
+        <div className="h-px w-full ds-skeleton" />
+      </div>
+      <div className="mt-12 space-y-10">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="space-y-3">
+            <div className="h-px w-full ds-skeleton" />
+            <div className="h-3 w-16 ds-skeleton" />
+            <div className="h-5 w-1/3 ds-skeleton" />
+            <div className="h-24 w-full ds-skeleton" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Main Component ── */
 export function ProjectDetail() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -206,254 +274,224 @@ export function ProjectDetail() {
     fetchProject();
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (loading) return <DetailSkeleton />;
 
   if (!token || !project) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-muted-foreground">Project not found.</p>
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <p className="text-sm text-muted-foreground">Project not found.</p>
       </div>
     );
   }
 
   const showActions = project.status === "review_ready";
+  const cfg = statusConfig[project.status] || statusConfig.intake_received;
 
   return (
-    <div className="p-6">
-      <div className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
-        <Link href="/projects" className="hover:text-foreground">
-          Projects
-        </Link>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-foreground">{project.company_name}</span>
+    <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8 sm:py-14">
+      {/* ── Page header (B3 fix: proper breadcrumb) ── */}
+      <div className="kaizen-enter-1">
+        {/* Breadcrumb */}
+        <nav className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
+          <Link
+            href="/projects"
+            className="transition-colors duration-200 hover:text-foreground"
+          >
+            Projects
+          </Link>
+          <span className="text-muted-foreground/40">/</span>
+          <span className="text-foreground">{project.company_name}</span>
+        </nav>
+
+        {/* Overline */}
+        <p
+          className="text-[0.6rem] font-medium uppercase text-muted-foreground/60"
+          style={{ letterSpacing: "0.08em" }}
+        >
+          Project
+        </p>
+
+        {/* Company name */}
+        <h1
+          className="mt-1 text-[clamp(1.75rem,1.14vw+1.5rem,2.5rem)] font-light tracking-tight text-foreground"
+          style={{ letterSpacing: "-0.03em", lineHeight: "1.1" }}
+        >
+          {project.company_name}
+        </h1>
+
+        {/* Metadata row */}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.className}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+            {cfg.label}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {tierLabels[project.tier] || project.tier}
+          </span>
+          <span className="text-xs text-muted-foreground/40">·</span>
+          <span className="text-xs text-muted-foreground">
+            Started {new Date(project.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+          </span>
+        </div>
+
+        {/* Decorative rule */}
+        <div className="kaizen-enter-fade mt-6 h-px w-full overflow-hidden">
+          <div className="kaizen-line h-full bg-border" />
+        </div>
       </div>
 
-      <div className="space-y-6">
-        {/* V2: Progress Tracker */}
-        <Card className="animate-stagger-up">
-          <CardHeader>
-            <CardTitle className="text-base">Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProjectProgressTracker
-              status={project.status}
-              createdAt={project.created_at}
-              updatedAt={project.updated_at}
-              tier={project.tier}
-            />
-          </CardContent>
-        </Card>
+      {/* ── Content sections ── */}
+      <div className="mt-10 space-y-10">
+        {/* Delivery Timeline (B2 fix: single unified visualization) */}
+        <Section label="Progress" title="Delivery Timeline">
+          <ProjectDeliveryTimeline
+            status={project.status}
+            createdAt={project.created_at}
+            tier={project.tier}
+          />
+        </Section>
 
-        {/* V2: Delivery Timeline */}
-        <Card className="animate-stagger-up">
-          <CardHeader>
-            <CardTitle className="text-base">Expected Delivery</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProjectDeliveryTimeline
-              status={project.status}
-              createdAt={project.created_at}
-              tier={project.tier}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Overview */}
-        <Card className="animate-stagger-up">
-          <CardHeader>
-            <CardTitle className="text-base">Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <dt className="text-muted-foreground">Company</dt>
-                <dd className="font-medium">{project.company_name}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Tier</dt>
-                <dd>
-                  <Badge variant="secondary">{project.tier}</Badge>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Started</dt>
-                <dd>{new Date(project.created_at).toLocaleDateString()}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Last updated</dt>
-                <dd>{new Date(project.updated_at).toLocaleDateString()}</dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
-
-        {/* V2: Spec Reader */}
+        {/* Specification */}
         {project.spec_content && (
-          <Card className="animate-stagger-up">
-            <CardHeader>
-              <CardTitle className="text-base">Specification</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProjectSpecReader specContent={project.spec_content} />
-            </CardContent>
-          </Card>
+          <Section label="Documentation" title="Specification">
+            <ProjectSpecReader specContent={project.spec_content} />
+          </Section>
         )}
 
-        {/* V2: Contract Viewer */}
-        <Card className="animate-stagger-up">
-          <CardHeader>
-            <CardTitle className="text-base">Contract</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProjectContractViewer token={token} />
-          </CardContent>
-        </Card>
+        {/* Contract */}
+        <Section label="Legal" title="Contract">
+          <ProjectContractViewer token={token} />
+        </Section>
 
-        {/* V2: Before/After Comparison */}
+        {/* Before/After Comparison */}
         {project.original_screenshot_url && project.deliverables?.preview_url && (
-          <Card className="animate-stagger-up">
-            <CardHeader>
-              <CardTitle className="text-base">Before / After</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProjectBeforeAfter
-                originalUrl={project.original_screenshot_url}
-                previewUrl={project.deliverables.preview_url}
-              />
-            </CardContent>
-          </Card>
+          <Section label="Comparison" title="Before / After">
+            <ProjectBeforeAfter
+              originalUrl={project.original_screenshot_url}
+              previewUrl={project.deliverables.preview_url}
+            />
+          </Section>
         )}
 
         {/* Preview */}
         {project.deliverables?.preview_url && (
-          <Card className="animate-stagger-up">
-            <CardHeader>
-              <CardTitle className="text-base">Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PreviewFrame url={project.deliverables.preview_url} />
-            </CardContent>
-          </Card>
+          <Section label="Deliverable" title="Preview">
+            <PreviewFrame url={project.deliverables.preview_url} />
+          </Section>
         )}
 
         {/* Review actions */}
         {showActions && (
-          <Card className="animate-stagger-up">
-            <CardHeader>
-              <CardTitle className="text-base">Review</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Your project is ready for review. Please approve it or request
-                revisions.
-              </p>
-              <div className="flex gap-3">
-                <Button onClick={handleApprove} disabled={actionLoading}>
+          <Section label="Action Required" title="Review">
+            <p className="mb-6 text-sm leading-[1.7] text-muted-foreground">
+              Your project is ready for review. Approve to finalize, or request revisions.
+            </p>
+            <div className="flex items-center gap-6">
+              <button
+                onClick={handleApprove}
+                disabled={actionLoading}
+                className="group inline-flex items-center gap-2 text-sm text-foreground transition-all duration-200 disabled:opacity-30"
+              >
+                <span className="relative">
                   Approve
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setRevisionOpen(true)}
-                  disabled={actionLoading}
-                >
+                  <span className="absolute inset-x-0 -bottom-0.5 h-px bg-emerald-500" />
+                </span>
+                <svg className="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setRevisionOpen(true)}
+                disabled={actionLoading}
+                className="group inline-flex items-center gap-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground disabled:opacity-30"
+              >
+                <span className="relative">
                   Request Revision
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                  <span className="absolute inset-x-0 -bottom-0.5 h-px bg-muted-foreground/40 transition-colors duration-200 group-hover:bg-primary" />
+                </span>
+              </button>
+            </div>
+          </Section>
         )}
 
-        {/* V2: CMS Onboarding Wizard */}
+        {/* CMS Onboarding */}
         {project.deliverables?.sanity_studio_url && (
-          <Card className="animate-stagger-up">
-            <CardHeader>
-              <CardTitle className="text-base">CMS Setup</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProjectCmsOnboarding
-                sanityStudioUrl={project.deliverables.sanity_studio_url}
-              />
-            </CardContent>
-          </Card>
+          <Section label="Setup" title="CMS">
+            <ProjectCmsOnboarding
+              sanityStudioUrl={project.deliverables.sanity_studio_url}
+            />
+          </Section>
         )}
 
         {/* Messages */}
-        <Card className="animate-stagger-up">
-          <CardHeader>
-            <CardTitle className="text-base">Messages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <MessageThread
-              messages={project.messages || []}
-              onSend={handleSendMessage}
-            />
-          </CardContent>
-        </Card>
+        <Section label="Communication" title="Messages">
+          <MessageThread
+            messages={project.messages || []}
+            onSend={handleSendMessage}
+          />
+        </Section>
 
-        {/* V2: Activity Feed */}
-        <Card className="animate-stagger-up">
-          <CardHeader>
-            <CardTitle className="text-base">Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProjectActivityFeed token={token} />
-          </CardContent>
-        </Card>
+        {/* Activity Feed */}
+        <Section label="History" title="Activity">
+          <ProjectActivityFeed token={token} />
+        </Section>
 
         {/* Deliverables */}
         {project.deliverables?.urls && project.deliverables.urls.length > 0 && (
-          <Card className="animate-stagger-up">
-            <CardHeader>
-              <CardTitle className="text-base">Deliverables</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {project.deliverables.urls.map((d, i) => (
-                  <li key={i}>
-                    <a
-                      href={d.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-primary hover:underline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
+          <Section label="Files" title="Deliverables">
+            <ul className="space-y-3">
+              {project.deliverables.urls.map((d, i) => (
+                <li key={i}>
+                  <a
+                    href={d.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2 text-sm text-foreground transition-colors duration-200"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 text-primary" />
+                    <span className="relative">
                       {d.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+                      <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-0 group-hover:scale-x-100" />
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Section>
         )}
       </div>
 
+      {/* Revision dialog */}
       <Dialog open={revisionOpen} onOpenChange={setRevisionOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Request Revision</DialogTitle>
+            <DialogTitle className="font-light tracking-[-0.02em]">Request Revision</DialogTitle>
           </DialogHeader>
-          <Textarea
+          <textarea
             placeholder="What changes would you like?"
             value={revisionMsg}
             onChange={(e) => setRevisionMsg(e.target.value)}
             rows={4}
+            className="w-full resize-none border-0 border-b border-border/60 bg-transparent px-0 py-3 text-sm text-foreground placeholder-muted-foreground/40 outline-none transition-colors duration-300 focus:border-primary/60"
+            style={{ fontFamily: "var(--font-aspekta)" }}
           />
           <DialogFooter>
-            <Button
-              variant="outline"
+            <button
               onClick={() => setRevisionOpen(false)}
+              className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
             >
               Cancel
-            </Button>
-            <Button onClick={handleRevision} disabled={actionLoading}>
-              Submit
-            </Button>
+            </button>
+            <button
+              onClick={handleRevision}
+              disabled={actionLoading}
+              className="group inline-flex items-center gap-2 text-sm text-foreground transition-all duration-200 disabled:opacity-30"
+            >
+              <span className="relative">
+                Submit
+                <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary" />
+              </span>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
