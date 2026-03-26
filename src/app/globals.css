@@ -405,3 +405,27 @@
 .msg-enter {
   animation: msg-slide-in 0.25s ease-out forwards;
 }
+
+/* ── Project card staggered entrance ── */
+@keyframes project-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.project-card-enter {
+  opacity: 0;
+  animation: project-card-enter 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-card-enter {
+    opacity: 1;
+    animation: none;
+  }
+}
