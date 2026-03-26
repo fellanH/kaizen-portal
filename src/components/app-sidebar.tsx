@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +15,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth-context";
-import { FolderKanban, MessageSquare, User, LogOut } from "lucide-react";
+import { FolderKanban, MessageSquare, User, LogOut, Sun, Moon } from "lucide-react";
 
 const navItems = [
   { title: "Projects", href: "/projects", icon: FolderKanban },
@@ -25,6 +26,7 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { email, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   return (
     <Sidebar>
@@ -56,16 +58,29 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border p-4">
         <div className="flex items-center justify-between">
-          <span className="truncate text-sm text-muted-foreground">
+          <span className="min-w-0 truncate text-sm text-muted-foreground">
             {email}
           </span>
-          <button
-            onClick={logout}
-            className="ml-2 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            title="Logout"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              title="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
+            <button
+              onClick={logout}
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              title="Logout"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>
