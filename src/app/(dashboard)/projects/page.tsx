@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, type Project } from "@/lib/api";
+import { toast } from "sonner";
 
 /* ── Pipeline stages in logical order ── */
 const PIPELINE_STAGES = [
@@ -310,7 +311,7 @@ export default function ProjectsPage() {
     api
       .getMyProjects()
       .then((data) => setProjects(data.projects))
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load projects"))
       .finally(() => setLoading(false));
   }, []);
 

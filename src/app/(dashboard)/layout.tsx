@@ -3,6 +3,7 @@
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AuthGuard } from "@/components/auth-guard";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function DashboardLayout({
@@ -28,7 +29,9 @@ export default function DashboardLayout({
               </span>
             </header>
           )}
-          <main className="flex-1">{children}</main>
+          <ErrorBoundary>
+            <main className="flex-1">{children}</main>
+          </ErrorBoundary>
         </SidebarInset>
       </SidebarProvider>
     </AuthGuard>

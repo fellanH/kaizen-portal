@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
@@ -11,8 +11,10 @@ function VerifyContent() {
   const { verify } = useAuth();
   const [error, setError] = useState(false);
   const [verifying, setVerifying] = useState(true);
+  const didVerify = useRef(false);
 
   useEffect(() => {
+    if (didVerify.current) return;
     const token = searchParams.get("token");
     if (!token) {
       setError(true);
@@ -20,6 +22,7 @@ function VerifyContent() {
       return;
     }
 
+    didVerify.current = true;
     verify(token).then((success) => {
       if (success) {
         router.push("/projects");

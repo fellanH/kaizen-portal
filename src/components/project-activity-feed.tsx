@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api, type ProjectEvent } from "@/lib/api";
+import { toast } from "sonner";
 
 const EVENT_ICONS: Record<string, string> = {
   stage_change: "~",
@@ -43,7 +44,7 @@ export function ProjectActivityFeed({ token }: { token: string }) {
         setEvents(data.events);
         setTotal(data.total);
       })
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load activity"))
       .finally(() => setLoading(false));
   }, [token]);
 

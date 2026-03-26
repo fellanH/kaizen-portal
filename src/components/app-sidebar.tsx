@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 import { FolderKanban, MessageSquare, User, LogOut, Sun, Moon } from "lucide-react";
 
 export function AppSidebar() {
@@ -33,7 +34,7 @@ export function AppSidebar() {
     api
       .getMyProjects()
       .then((data) => setProjectCount(data.projects.length))
-      .catch(() => {});
+      .catch(() => toast.error("Failed to load projects"));
   }, []);
 
   const navItems = [

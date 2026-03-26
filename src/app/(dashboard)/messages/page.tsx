@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { api, type Project, type Message } from "@/lib/api";
+import { toast } from "sonner";
 import { MessageSquare, Search } from "lucide-react";
 
 interface ProjectMessage extends Message {
@@ -54,7 +55,7 @@ export default function MessagesPage() {
         );
         setMessages(allMessages);
       })
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load messages"))
       .finally(() => setLoading(false));
   }, []);
 

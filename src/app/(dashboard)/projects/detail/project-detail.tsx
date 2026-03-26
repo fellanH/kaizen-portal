@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { ProjectDeliveryTimeline } from "@/components/project-delivery-timeline";
 import { ProjectSpecReader } from "@/components/project-spec-reader";
 import { ProjectContractViewer } from "@/components/project-contract-viewer";
@@ -230,7 +231,7 @@ export function ProjectDetail() {
     api
       .getProject(token)
       .then(setProject)
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load project"))
       .finally(() => setLoading(false));
   }, [token]);
 
