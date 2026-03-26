@@ -97,8 +97,9 @@ function ProjectThumbnail({ project }: { project: Project }) {
   }
 
   /* Styled placeholder: abstract gradient mesh */
+  const name = project.company_name || "Project";
   const hue =
-    project.company_name
+    name
       .split("")
       .reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
 
@@ -115,7 +116,7 @@ function ProjectThumbnail({ project }: { project: Project }) {
           className="text-[clamp(1.5rem,2vw,2.5rem)] font-light tracking-tight text-foreground/20"
           style={{ letterSpacing: "-0.03em" }}
         >
-          {project.company_name
+          {name
             .split(/\s+/)
             .map((w) => w[0])
             .join("")
@@ -167,7 +168,7 @@ function StatusBadge({ status }: { status: string }) {
 
 /* ── Project card ── */
 function ProjectCard({ project, index }: { project: Project; index: number }) {
-  const days = daysSince(project.created_at);
+  const days = project.created_at ? daysSince(project.created_at) : 0;
 
   return (
     <Link
@@ -196,7 +197,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               className="text-lg font-medium leading-tight tracking-tight text-foreground"
               style={{ letterSpacing: "-0.02em" }}
             >
-              {project.company_name}
+              {project.company_name || "Untitled Project"}
             </h3>
             <div className="flex items-center gap-2">
               <StatusBadge status={project.status} />
@@ -212,7 +213,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           {/* Meta row */}
           <div className="flex items-center justify-between border-t border-border/50 pt-3">
             <span className="text-xs text-muted-foreground">
-              Started {formatDate(project.created_at)}
+              {project.created_at ? `Started ${formatDate(project.created_at)}` : ""}
             </span>
             <span className="text-xs text-muted-foreground/60">
               {days === 0 ? "Today" : `${days}d ago`}
