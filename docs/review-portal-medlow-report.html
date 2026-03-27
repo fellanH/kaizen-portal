@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal -- Medium/Low Code Review Fixes</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #fafafa; --surface: #ffffff; --border: #e4e4e7;
+  --text: #09090b; --dim: #52525b; --muted: #71717a;
+  --accent: #27272a; --accent-fg: #fafafa;
+  --green: #16a34a; --red: #dc2626; --yellow: #ca8a04;
+  --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif;
+  --radius: 8px; --radius-sm: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09090b; --surface: #18181b; --border: #27272a;
+    --text: #fafafa; --dim: #a1a1aa; --muted: #71717a;
+    --accent: #e4e4e7; --accent-fg: #09090b;
+    --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+  }
+}
+body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 14px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.container { max-width: 800px; margin: 0 auto; padding: 48px 24px 80px; }
+.hero { margin-bottom: 48px; }
+.hero h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 4px; }
+.hero .meta { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+.stats { display: flex; gap: 32px; }
+.stat { display: flex; flex-direction: column; }
+.stat-value { font-size: 32px; font-weight: 700; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.stat-green .stat-value { color: var(--green); }
+.stat-dim .stat-value { color: var(--dim); }
+.section { margin-bottom: 40px; }
+.section-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--muted); margin-bottom: 16px; font-weight: 500;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 12px;
+}
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.card-title { font-size: 14px; font-weight: 600; }
+.card-desc { font-size: 13px; color: var(--dim); line-height: 1.5; }
+.card-files { font-size: 12px; color: var(--muted); margin-top: 8px; font-family: var(--mono); }
+.badge {
+  font-family: var(--mono); font-size: 11px; padding: 2px 8px;
+  border-radius: 9999px; display: inline-flex; align-items: center;
+}
+.badge-green { background: rgba(34,197,94,0.12); color: var(--green); }
+.badge-yellow { background: rgba(234,179,8,0.12); color: var(--yellow); }
+.badge-default { background: var(--border); color: var(--dim); }
+.divider { height: 1px; background: var(--border); margin: 32px 0; }
+.footer {
+  border-top: 1px solid var(--border); padding-top: 24px; margin-top: 48px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--muted);
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="hero">
+    <h1>Portal Code Review: Medium + Low Fixes</h1>
+    <div class="meta">2026-03-27 -- Code Review Remediation Report</div>
+    <div class="stats">
+      <div class="stat stat-green">
+        <span class="stat-value">12</span>
+        <span class="stat-label">Findings Fixed</span>
+      </div>
+      <div class="stat stat-dim">
+        <span class="stat-value">7</span>
+        <span class="stat-label">Medium</span>
+      </div>
+      <div class="stat stat-dim">
+        <span class="stat-value">5</span>
+        <span class="stat-label">Low</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Medium Findings (7)</div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">M1: Duplicate project list fetching</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Created ProjectsProvider context that fetches once and shares data across sidebar, projects page, and messages page. Eliminated 2+ redundant API calls per page load.</div>
+      <div class="card-files">lib/projects-context.tsx (new), app-sidebar.tsx, projects/page.tsx, messages/page.tsx, layout.tsx</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">M2: Unconditional 15s polling</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Added document.visibilitychange listener to pause polling when tab is hidden. Polling skips fetches when document is not visible.</div>
+      <div class="card-files">projects/detail/project-detail.tsx</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">M3: useIsMobile hydration mismatch</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Hook now returns undefined during SSR instead of coercing to false. Consumers handle the undefined state: sidebar provider uses nullish coalescing, layout treats undefined as falsy (mobile header hidden during SSR).</div>
+      <div class="card-files">hooks/use-mobile.ts, components/ui/sidebar.tsx</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">M4: Project token exposed in URL query string</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Moved token from ?token=xxx query parameter to hash fragment (#xxx). Hash fragments are not sent in Referer headers and not stored in browser history in the same way. Dynamic route segments are incompatible with Next.js static export, so hash-based approach was chosen. Legacy query string still works as fallback.</div>
+      <div class="card-files">projects/detail/project-detail.tsx, projects/page.tsx, messages/page.tsx</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">M5: Revision dialog allows empty submission</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Added trim() guard in handleRevision handler and disabled={!revisionMsg.trim()} on submit button.</div>
+      <div class="card-files">projects/detail/project-detail.tsx</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">M6: Message send has no error handling</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Wrapped API call in try/catch. Text only cleared on success. toast.error shown on failure. MessageThread.handleSend also updated to preserve text on error.</div>
+      <div class="card-files">projects/detail/project-detail.tsx</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">M7: Approve/Revision actions have no error handling</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Added catch blocks with toast.error() to both handleApprove and handleRevision. API failures now surface user-visible error messages.</div>
+      <div class="card-files">projects/detail/project-detail.tsx</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Low Findings (5)</div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">L1: Unused component: project-progress-tracker.tsx</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Confirmed zero imports via grep. Deleted the file. Superseded by ProjectDeliveryTimeline.</div>
+      <div class="card-files">components/project-progress-tracker.tsx (deleted)</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">L2: Unused hook: use-collaborators.ts</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Confirmed zero imports via grep. Deleted the file. Account page implements collaborator management inline.</div>
+      <div class="card-files">hooks/use-collaborators.ts (deleted)</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">L3: Hardcoded colors on auth pages</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Replaced all hardcoded hex values (#111110, #e85325, #faf9f7) with theme tokens (bg-background, text-primary, text-foreground). Added dark class wrapper to force dark theme on auth pages while using the theme system.</div>
+      <div class="card-files">app/login/page.tsx, app/auth/verify/page.tsx</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">L4: Contract viewer returns null on error</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Added error state tracking. On API failure, renders an error message with a retry button instead of silently vanishing. Distinguishes between "no contract" (hidden) and "API error" (visible feedback).</div>
+      <div class="card-files">components/project-contract-viewer.tsx</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">L5: iframes lack sandbox attribute</span>
+        <span class="badge badge-green">fixed</span>
+      </div>
+      <div class="card-desc">Added sandbox="allow-scripts allow-same-origin" to all 5 iframes: PreviewFrame (1), ProjectBeforeAfter desktop slider (2), ProjectBeforeAfter mobile stacked (2).</div>
+      <div class="card-files">projects/detail/project-detail.tsx, components/project-before-after.tsx</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Summary</div>
+    <div class="card">
+      <div class="card-desc">
+        All 12 medium and low findings from the portal code review have been addressed. The portal builds cleanly with zero type errors. Key architectural change: shared ProjectsProvider context eliminates duplicate API calls across the dashboard.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>12/12 findings resolved -- portal builds clean</span>
+    <span>Generated 2026-03-27</span>
+  </div>
+
+</div>
+</body>
+</html>

@@ -50,9 +50,14 @@ function MessageThread({
   async function handleSend() {
     if (!text.trim()) return;
     setSending(true);
-    await onSend(text.trim());
-    setText("");
-    setSending(false);
+    try {
+      await onSend(text.trim());
+      setText("");
+    } catch {
+      // error toast shown by parent
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -167,6 +172,7 @@ function PreviewFrame({ url }: { url: string }) {
           className="h-[600px] border-0"
           style={{ width: widths[viewport] }}
           title="Preview"
+          sandbox="allow-scripts allow-same-origin"
         />
       </div>
     </div>
@@ -226,7 +232,13 @@ function DetailSkeleton() {
 /* ── Main Component ── */
 export function ProjectDetail() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  // Prefer hash fragment (not sent in Referer headers) over query string (legacy)
+  const [hashToken, setHashToken] = useState<string | null>(null);
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) setHashToken(hash);
+  }, []);
+  const token = hashToken || searchParams.get("token");
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [revisionOpen, setRevisionOpen] = useState(false);
@@ -248,8 +260,34 @@ export function ProjectDetail() {
       return;
     }
     fetchProject();
-    const interval = setInterval(fetchProject, 15000);
-    return () => clearInterval(interval);
+
+    // Skip polling for completed projects
+    const terminalStatuses = ["live", "delivered"];
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    function startPolling() {
+      if (interval) return;
+      interval = setInterval(() => {
+        // Only poll when tab is visible and project isn't in a terminal state
+        if (!document.hidden) fetchProject();
+      }, 15000);
+    }
+
+    function stopPolling() {
+      if (interval) { clearInterval(interval); interval = null; }
+    }
+
+    function handleVisibility() {
+      if (document.hidden) stopPolling();
+      else startPolling();
+    }
+
+    startPolling();
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [fetchProject, token]);
 
   async function handleApprove() {
@@ -258,19 +296,23 @@ export function ProjectDetail() {
     try {
       await api.approve(token, "approve");
       fetchProject();
+    } catch {
+      toast.error("Failed to approve project");
     } finally {
       setActionLoading(false);
     }
   }
 
   async function handleRevision() {
-    if (!token) return;
+    if (!token || !revisionMsg.trim()) return;
     setActionLoading(true);
     try {
       await api.approve(token, "revise", revisionMsg);
       setRevisionOpen(false);
       setRevisionMsg("");
       fetchProject();
+    } catch {
+      toast.error("Failed to submit revision request");
     } finally {
       setActionLoading(false);
     }
@@ -278,8 +320,13 @@ export function ProjectDetail() {
 
   async function handleSendMessage(text: string) {
     if (!token) return;
-    await api.sendMessage(token, text);
-    fetchProject();
+    try {
+      await api.sendMessage(token, text);
+      fetchProject();
+    } catch {
+      toast.error("Failed to send message");
+      throw new Error("send failed");
+    }
   }
 
   if (loading) return <DetailSkeleton />;
@@ -500,7 +547,7 @@ export function ProjectDetail() {
             </button>
             <button
               onClick={handleRevision}
-              disabled={actionLoading}
+              disabled={actionLoading || !revisionMsg.trim()}
               className="group inline-flex items-center gap-2 text-sm text-foreground transition-all duration-200 disabled:opacity-30"
             >
               <span className="relative">

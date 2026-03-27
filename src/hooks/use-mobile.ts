@@ -15,5 +15,6 @@ export function useIsMobile() {
     return () => mql.removeEventListener("change", onChange)
   }, [])
 
-  return !!isMobile
+  // Return undefined before hydration so consumers can handle the unknown state
+  return isMobile
 }

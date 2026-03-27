@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -17,8 +17,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth-context";
-import { api } from "@/lib/api";
-import { toast } from "sonner";
+import { useProjects } from "@/lib/projects-context";
 import { FolderKanban, MessageSquare, User, LogOut, Sun, Moon } from "lucide-react";
 
 export function AppSidebar() {
@@ -26,23 +25,16 @@ export function AppSidebar() {
   const { email, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [projectCount, setProjectCount] = useState<number | null>(null);
+  const { projects } = useProjects();
 
   useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    api
-      .getMyProjects()
-      .then((data) => setProjectCount(data.projects.length))
-      .catch(() => toast.error("Failed to load projects"));
-  }, []);
 
   const navItems = [
     {
       title: "Projects",
       href: "/projects",
       icon: FolderKanban,
-      badge: projectCount,
+      badge: projects.length || null,
     },
     { title: "Messages", href: "/messages", icon: MessageSquare, badge: null },
     { title: "Account", href: "/account", icon: User, badge: null },

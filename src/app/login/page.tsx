@@ -27,13 +27,13 @@ export default function LoginPage() {
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center bg-[#111110] px-6"
+      className="dark flex min-h-screen flex-col items-center justify-center bg-background px-6"
       style={{ fontFamily: "var(--font-aspekta)" }}
     >
       <div className="flex w-full max-w-[480px] flex-col items-start">
         {/* Kaizen wordmark */}
         <div className="kaizen-enter-1 mb-16">
-          <span className="text-sm font-medium tracking-[0.08em] uppercase text-[#e85325]">
+          <span className="text-sm font-medium tracking-[0.08em] uppercase text-primary">
             Kaizen
           </span>
         </div>
@@ -41,26 +41,26 @@ export default function LoginPage() {
         {sent ? (
           /* ── Email sent confirmation ── */
           <>
-            <h1 className="kaizen-enter-2 text-[clamp(2rem,1.14vw+1.72rem,3rem)] font-light leading-[1.1] tracking-[-0.03em] text-[#faf9f7]">
+            <h1 className="kaizen-enter-2 text-[clamp(2rem,1.14vw+1.72rem,3rem)] font-light leading-[1.1] tracking-[-0.03em] text-foreground">
               Check your inbox
             </h1>
 
             <div className="kaizen-enter-fade mt-8 mb-6 h-px w-full overflow-hidden">
-              <div className="kaizen-line h-full bg-[#e85325]/30" />
+              <div className="kaizen-line h-full bg-primary/30" />
             </div>
 
-            <p className="kaizen-enter-3 text-[clamp(1rem,0.07vw+0.98rem,1.0625rem)] leading-[1.7] text-[#faf9f7]/55">
+            <p className="kaizen-enter-3 text-[clamp(1rem,0.07vw+0.98rem,1.0625rem)] leading-[1.7] text-foreground/55">
               We sent a login link to{" "}
-              <span className="text-[#faf9f7]/80">{email}</span>.
+              <span className="text-foreground/80">{email}</span>.
               {" "}Click it to access your project portal. The link expires in 15 minutes.
             </p>
 
             <button
               onClick={() => setSent(false)}
-              className="kaizen-enter-4 group mt-10 inline-flex items-center gap-3 text-[clamp(1rem,0.07vw+0.98rem,1.0625rem)] text-[#faf9f7] transition-colors duration-200"
+              className="kaizen-enter-4 group mt-10 inline-flex items-center gap-3 text-[clamp(1rem,0.07vw+0.98rem,1.0625rem)] text-foreground transition-colors duration-200"
             >
               <svg
-                className="h-4 w-4 text-[#e85325] transition-transform duration-300 group-hover:-translate-x-1"
+                className="h-4 w-4 text-primary transition-transform duration-300 group-hover:-translate-x-1"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -70,22 +70,22 @@ export default function LoginPage() {
               </svg>
               <span className="relative">
                 Use a different email
-                <span className="absolute inset-x-0 -bottom-0.5 h-px bg-[#e85325] transition-transform duration-300 origin-right scale-x-100 group-hover:scale-x-0" />
+                <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary transition-transform duration-300 origin-right scale-x-100 group-hover:scale-x-0" />
               </span>
             </button>
           </>
         ) : (
           /* ── Login form ── */
           <>
-            <h1 className="kaizen-enter-2 text-[clamp(2rem,1.14vw+1.72rem,3rem)] font-light leading-[1.1] tracking-[-0.03em] text-[#faf9f7]">
+            <h1 className="kaizen-enter-2 text-[clamp(2rem,1.14vw+1.72rem,3rem)] font-light leading-[1.1] tracking-[-0.03em] text-foreground">
               Welcome back
             </h1>
 
             <div className="kaizen-enter-fade mt-8 mb-6 h-px w-full overflow-hidden">
-              <div className="kaizen-line h-full bg-[#e85325]/30" />
+              <div className="kaizen-line h-full bg-primary/30" />
             </div>
 
-            <p className="kaizen-enter-3 mb-10 text-[clamp(1rem,0.07vw+0.98rem,1.0625rem)] leading-[1.7] text-[#faf9f7]/55">
+            <p className="kaizen-enter-3 mb-10 text-[clamp(1rem,0.07vw+0.98rem,1.0625rem)] leading-[1.7] text-foreground/55">
               Sign in to view your project status and deliverables.
             </p>
 
@@ -98,13 +98,13 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoFocus
-                  className="w-full border-0 border-b border-[#faf9f7]/15 bg-transparent px-0 py-3 text-[clamp(1rem,0.07vw+0.98rem,1.0625rem)] text-[#faf9f7] placeholder-[#faf9f7]/25 outline-none transition-colors duration-300 focus:border-[#e85325]/60"
+                  className="w-full border-0 border-b border-foreground/15 bg-transparent px-0 py-3 text-[clamp(1rem,0.07vw+0.98rem,1.0625rem)] text-foreground placeholder-foreground/25 outline-none transition-colors duration-300 focus:border-primary/60"
                   style={{ fontFamily: "var(--font-aspekta)" }}
                 />
               </div>
 
               {error && (
-                <p className="mt-4 text-sm text-[#e85325]/80">
+                <p className="mt-4 text-sm text-primary/80">
                   {error}
                 </p>
               )}
@@ -112,15 +112,15 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading || !email}
-                className="mt-8 inline-flex items-center gap-3 text-[clamp(1rem,0.07vw+0.98rem,1.0625rem)] text-[#faf9f7] transition-all duration-200 disabled:opacity-30"
+                className="mt-8 inline-flex items-center gap-3 text-[clamp(1rem,0.07vw+0.98rem,1.0625rem)] text-foreground transition-all duration-200 disabled:opacity-30"
               >
                 <span className="relative">
                   {loading ? "Sending..." : "Send login link"}
-                  <span className="absolute inset-x-0 -bottom-0.5 h-px bg-[#e85325] transition-transform duration-300 origin-left scale-x-100 group-hover:scale-x-0" />
+                  <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary transition-transform duration-300 origin-left scale-x-100 group-hover:scale-x-0" />
                 </span>
                 {!loading && (
                   <svg
-                    className="h-4 w-4 text-[#e85325]"
+                    className="h-4 w-4 text-primary"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -135,11 +135,11 @@ export default function LoginPage() {
         )}
 
         {/* Footer contact */}
-        <p className="kaizen-enter-fade mt-24 text-[clamp(0.8125rem,0.07vw+0.80rem,0.875rem)] leading-[1.5] text-[#faf9f7]/30">
+        <p className="kaizen-enter-fade mt-24 text-[clamp(0.8125rem,0.07vw+0.80rem,0.875rem)] leading-[1.5] text-foreground/30">
           First time here? Ask your project lead to invite you, or email{" "}
           <a
             href="mailto:hello@hi-kaizen.com"
-            className="text-[#faf9f7]/40 transition-colors duration-200 hover:text-[#e85325]"
+            className="text-foreground/40 transition-colors duration-200 hover:text-primary"
           >
             hello@hi-kaizen.com
           </a>

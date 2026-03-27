@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { api, type Project, type Message } from "@/lib/api";
-import { toast } from "sonner";
+import { type Message } from "@/lib/api";
+import { useProjects } from "@/lib/projects-context";
 import { MessageSquare, Search } from "lucide-react";
 
 interface ProjectMessage extends Message {
@@ -28,36 +28,29 @@ function MessageSkeleton() {
 }
 
 export default function MessagesPage() {
-  const [messages, setMessages] = useState<ProjectMessage[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { projects, loading } = useProjects();
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    api
-      .getMyProjects()
-      .then((data) => {
-        const allMessages: ProjectMessage[] = [];
-        for (const project of data.projects) {
-          if (project.messages) {
-            for (const msg of project.messages) {
-              allMessages.push({
-                ...msg,
-                project_token: project.token,
-                company_name: project.company_name,
-              });
-            }
-          }
+  const messages = useMemo(() => {
+    const allMessages: ProjectMessage[] = [];
+    for (const project of projects) {
+      if (project.messages) {
+        for (const msg of project.messages) {
+          allMessages.push({
+            ...msg,
+            project_token: project.token,
+            company_name: project.company_name,
+          });
         }
-        allMessages.sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
-        );
-        setMessages(allMessages);
-      })
-      .catch(() => toast.error("Failed to load messages"))
-      .finally(() => setLoading(false));
-  }, []);
+      }
+    }
+    allMessages.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() -
+        new Date(a.created_at).getTime()
+    );
+    return allMessages;
+  }, [projects]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return messages;
@@ -162,7 +155,7 @@ export default function MessagesPage() {
                   {msgs.map((msg, i) => (
                     <Link
                       key={msg.id}
-                      href={`/projects/detail?token=${msg.project_token}`}
+                      href={`/projects/detail#${msg.project_token}`}
                       className="ds-section group block rounded-lg px-4 py-3 transition-colors duration-200 hover:bg-muted/50"
                       style={{ animationDelay: `${i * 40}ms` }}
                     >

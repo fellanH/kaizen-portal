@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/app-sidebar";
 import { AuthGuard } from "@/components/auth-guard";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { ProjectsProvider } from "@/lib/projects-context";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function DashboardLayout({
@@ -15,6 +16,7 @@ export default function DashboardLayout({
 
   return (
     <AuthGuard>
+      <ProjectsProvider>
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
@@ -34,6 +36,7 @@ export default function DashboardLayout({
           </ErrorBoundary>
         </SidebarInset>
       </SidebarProvider>
+      </ProjectsProvider>
     </AuthGuard>
   );
 }

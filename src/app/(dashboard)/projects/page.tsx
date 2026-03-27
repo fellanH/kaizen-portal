@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { api, type Project } from "@/lib/api";
-import { toast } from "sonner";
+import { type Project } from "@/lib/api";
+import { useProjects } from "@/lib/projects-context";
 
 /* ── Pipeline stages in logical order ── */
 const PIPELINE_STAGES = [
@@ -173,7 +172,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
   return (
     <Link
-      href={`/projects/detail?token=${project.token}`}
+      href={`/projects/detail#${project.token}`}
       className="project-card-enter group block"
       style={{ animationDelay: `${index * 80}ms` }}
     >
@@ -304,16 +303,7 @@ function EmptyState() {
 
 /* ── Main page ── */
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api
-      .getMyProjects()
-      .then((data) => setProjects(data.projects))
-      .catch(() => toast.error("Failed to load projects"))
-      .finally(() => setLoading(false));
-  }, []);
+  const { projects, loading } = useProjects();
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10 sm:px-8 sm:py-14">

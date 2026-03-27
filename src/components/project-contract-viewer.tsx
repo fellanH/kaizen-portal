@@ -7,14 +7,19 @@ import { toast } from "sonner";
 export function ProjectContractViewer({ token }: { token: string }) {
   const [data, setData] = useState<ContractResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+    setError(false);
     api
       .getContract(token)
       .then(setData)
-      .catch(() => toast.error("Failed to load contract"))
+      .catch(() => {
+        setError(true);
+        toast.error("Failed to load contract");
+      })
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -75,6 +80,20 @@ export function ProjectContractViewer({ token }: { token: string }) {
       <div className="space-y-3">
         <div className="h-4 w-1/3 ds-skeleton" />
         <div className="h-20 w-full ds-skeleton" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 px-4 py-3">
+        <p className="flex-1 text-sm text-muted-foreground">Failed to load contract.</p>
+        <button
+          onClick={() => { setLoading(true); setError(false); api.getContract(token).then(setData).catch(() => { setError(true); toast.error("Failed to load contract"); }).finally(() => setLoading(false)); }}
+          className="text-xs text-primary transition-colors duration-200 hover:text-primary/80"
+        >
+          Retry
+        </button>
       </div>
     );
   }

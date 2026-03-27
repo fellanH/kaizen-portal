@@ -53,6 +53,7 @@ export function ProjectBeforeAfter({
           src={previewUrl}
           className="absolute inset-0 h-full w-full border-0"
           title="After: Kaizen rebuild"
+          sandbox="allow-scripts allow-same-origin"
         />
 
         {/* Before (left, clipped) */}
@@ -64,6 +65,7 @@ export function ProjectBeforeAfter({
             src={originalUrl}
             className="h-full w-full border-0"
             title="Before: Original website"
+            sandbox="allow-scripts allow-same-origin"
           />
         </div>
 
@@ -97,6 +99,7 @@ export function ProjectBeforeAfter({
               src={originalUrl}
               className="h-full w-full border-0"
               title="Before: Original website"
+              sandbox="allow-scripts allow-same-origin"
             />
           </div>
         </div>
@@ -107,6 +110,7 @@ export function ProjectBeforeAfter({
               src={previewUrl}
               className="h-full w-full border-0"
               title="After: Kaizen rebuild"
+              sandbox="allow-scripts allow-same-origin"
             />
           </div>
         </div>
