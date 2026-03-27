@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, Plus } from "lucide-react";
+import { ExternalLink, Plus, PlusCircle } from "lucide-react";
 import { type Project } from "@/lib/api";
 import { useProjects } from "@/lib/projects-context";
 
@@ -282,11 +282,20 @@ function PageHeader({ count }: { count: number }) {
             Your Projects
           </h1>
         </div>
-        {count > 0 && (
-          <span className="text-sm text-muted-foreground">
-            {count} {count === 1 ? "project" : "projects"}
-          </span>
-        )}
+        <div className="flex items-center gap-4">
+          {count > 0 && (
+            <span className="text-sm text-muted-foreground">
+              {count} {count === 1 ? "project" : "projects"}
+            </span>
+          )}
+          <Link
+            href="/projects/new"
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1.5 text-xs font-medium text-primary transition-colors duration-200 hover:bg-primary/20"
+          >
+            <PlusCircle className="h-3.5 w-3.5" />
+            New Project
+          </Link>
+        </div>
       </div>
       <div className="kaizen-line h-px bg-border" />
     </div>

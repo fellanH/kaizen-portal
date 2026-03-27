@@ -4,24 +4,18 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, type Project, type Message } from "@/lib/api";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Pencil } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { ProjectDeliveryTimeline } from "@/components/project-delivery-timeline";
 import { ProjectSpecReader } from "@/components/project-spec-reader";
 import { ProjectContractViewer } from "@/components/project-contract-viewer";
 import { ProjectBeforeAfter } from "@/components/project-before-after";
 import { ProjectActivityFeed } from "@/components/project-activity-feed";
 import { ProjectCmsOnboarding } from "@/components/project-cms-onboarding";
+import { ProjectPrimaryAction } from "@/components/project-primary-action";
+import { ProjectStageIndicator } from "@/components/project-stage-indicator";
 
-/* ── Status config with semantic colors (B5 fix) ── */
+/* ── Status config with semantic colors ── */
 const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
   intake_received: { label: "Received", className: "status-neutral", dot: "bg-muted-foreground/60" },
   spec_writing: { label: "Scoping", className: "status-amber", dot: "bg-amber-500" },
@@ -131,7 +125,7 @@ function MessageThread({
 }
 
 /* ── Preview Frame ── */
-function PreviewFrame({ url }: { url: string }) {
+function PreviewFrame({ url, tall }: { url: string; tall?: boolean }) {
   const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">("desktop");
   const widths = { mobile: 375, tablet: 768, desktop: 1280 };
 
@@ -169,7 +163,7 @@ function PreviewFrame({ url }: { url: string }) {
       <div className="flex justify-center overflow-hidden rounded-lg border border-border/60 bg-muted/30">
         <iframe
           src={url}
-          className="h-[600px] border-0"
+          className={tall ? "h-[800px] border-0" : "h-[600px] border-0"}
           style={{ width: widths[viewport] }}
           title="Preview"
           sandbox="allow-scripts allow-same-origin"
@@ -181,16 +175,18 @@ function PreviewFrame({ url }: { url: string }) {
 
 /* ── Section wrapper ── */
 function Section({
+  id,
   label,
   title,
   children,
 }: {
+  id?: string;
   label?: string;
   title?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="ds-section">
+    <div id={id} className="ds-section">
       <div className="ds-rule mb-6" />
       {label && (
         <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
@@ -229,10 +225,32 @@ function DetailSkeleton() {
   );
 }
 
+/* ── Visibility helpers ── */
+type Status = "intake_received" | "spec_writing" | "building" | "review_ready" | "live";
+
+function showPreview(s: Status, hasUrl: boolean) {
+  if (!hasUrl && s !== "review_ready") return false;
+  return s === "building" || s === "review_ready" || s === "live";
+}
+function showBeforeAfter(s: Status, hasOriginal: boolean, hasPreview: boolean) {
+  if (!hasOriginal || !hasPreview) return false;
+  return s === "review_ready" || s === "live";
+}
+function showTimeline(s: Status) {
+  return s !== "live";
+}
+function showSpec(s: Status, hasContent: boolean) {
+  if (!hasContent) return false;
+  return s === "spec_writing" || s === "building" || s === "review_ready";
+}
+function showDomain(s: Status) { return s === "live"; }
+function showCms(s: Status, hasUrl: boolean) { return s === "live" && hasUrl; }
+function showUpsell(s: Status) { return s === "live"; }
+function showDeliverables(s: Status, hasUrls: boolean) { return s === "live" && hasUrls; }
+
 /* ── Main Component ── */
 export function ProjectDetail() {
   const searchParams = useSearchParams();
-  // Prefer hash fragment (not sent in Referer headers) over query string (legacy)
   const [hashToken, setHashToken] = useState<string | null>(null);
   useEffect(() => {
     const hash = window.location.hash.slice(1);
@@ -241,8 +259,6 @@ export function ProjectDetail() {
   const token = hashToken || searchParams.get("token");
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-  const [revisionOpen, setRevisionOpen] = useState(false);
-  const [revisionMsg, setRevisionMsg] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchProject = useCallback(() => {
@@ -261,14 +277,11 @@ export function ProjectDetail() {
     }
     fetchProject();
 
-    // Skip polling for completed projects
-    const terminalStatuses = ["live", "delivered"];
     let interval: ReturnType<typeof setInterval> | null = null;
 
     function startPolling() {
       if (interval) return;
       interval = setInterval(() => {
-        // Only poll when tab is visible and project isn't in a terminal state
         if (!document.hidden) fetchProject();
       }, 15000);
     }
@@ -303,13 +316,11 @@ export function ProjectDetail() {
     }
   }
 
-  async function handleRevision() {
-    if (!token || !revisionMsg.trim()) return;
+  async function handleRevision(message: string) {
+    if (!token) return;
     setActionLoading(true);
     try {
-      await api.approve(token, "revise", revisionMsg);
-      setRevisionOpen(false);
-      setRevisionMsg("");
+      await api.approve(token, "revise", message);
       fetchProject();
     } catch {
       toast.error("Failed to submit revision request");
@@ -339,14 +350,19 @@ export function ProjectDetail() {
     );
   }
 
-  const showActions = project.status === "review_ready";
   const cfg = statusConfig[project.status] || statusConfig.intake_received;
+  const s = project.status as Status;
+  const previewUrl = project.deliverables?.preview_url;
+  const hasPreviewUrl = !!previewUrl;
+  const hasOriginalScreenshot = !!project.original_screenshot_url;
+  const hasSpecContent = !!project.spec_content;
+  const hasSanityUrl = !!project.deliverables?.sanity_studio_url;
+  const hasDeliverableUrls = !!project.deliverables?.urls && project.deliverables.urls.length > 0;
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8 sm:py-14">
-      {/* ── Page header (B3 fix: proper breadcrumb) ── */}
+      {/* ── Page header ── */}
       <div className="kaizen-enter-1">
-        {/* Breadcrumb */}
         <nav className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
           <Link
             href="/projects"
@@ -358,7 +374,6 @@ export function ProjectDetail() {
           <span className="text-foreground">{project.company_name}</span>
         </nav>
 
-        {/* Overline */}
         <p
           className="text-[0.6rem] font-medium uppercase text-muted-foreground/60"
           style={{ letterSpacing: "0.08em" }}
@@ -366,7 +381,6 @@ export function ProjectDetail() {
           Project
         </p>
 
-        {/* Company name */}
         <h1
           className="mt-1 text-[clamp(1.75rem,1.14vw+1.5rem,2.5rem)] font-light tracking-tight text-foreground"
           style={{ letterSpacing: "-0.03em", lineHeight: "1.1" }}
@@ -374,7 +388,6 @@ export function ProjectDetail() {
           {project.company_name}
         </h1>
 
-        {/* Metadata row */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.className}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
@@ -383,154 +396,71 @@ export function ProjectDetail() {
           <span className="text-xs text-muted-foreground">
             {tierLabels[project.tier] || project.tier}
           </span>
-          <span className="text-xs text-muted-foreground/40">·</span>
+          <span className="text-xs text-muted-foreground/40">&middot;</span>
           <span className="text-xs text-muted-foreground">
             Started {new Date(project.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
           </span>
         </div>
 
-        {/* Decorative rule */}
         <div className="kaizen-enter-fade mt-6 h-px w-full overflow-hidden">
           <div className="kaizen-line h-full bg-border" />
         </div>
       </div>
 
-      {/* ── Content sections ── */}
+      {/* ── Content sections (stage-aware order) ── */}
       <div className="mt-10 space-y-10">
-        {/* Visit Your Website card for live projects */}
-        {project.status === "live" && project.deliverables?.preview_url && (
-          <div className="overflow-hidden rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04]">
-            <div className="flex items-center gap-5 p-6">
-              <div className="hidden shrink-0 overflow-hidden rounded-lg sm:block sm:h-20 sm:w-32">
-                <img
-                  src={project.deliverables.preview_url}
-                  alt={`${project.company_name} preview`}
-                  className="h-full w-full object-cover object-top"
-                  loading="lazy"
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-emerald-600 dark:text-emerald-400">
-                  Your Website
-                </p>
-                <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                  {project.deliverables.preview_url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                </p>
-              </div>
-              <a
-                href={project.deliverables.preview_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-emerald-500/15 px-4 py-2 text-sm font-medium text-emerald-600 transition-colors duration-200 hover:bg-emerald-500/25 dark:text-emerald-400"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Open
-              </a>
-            </div>
-          </div>
-        )}
 
-        {/* Delivery Timeline (B2 fix: single unified visualization) */}
-        <Section label="Progress" title="Delivery Timeline">
-          <ProjectDeliveryTimeline
-            status={project.status}
-            createdAt={project.created_at}
-            tier={project.tier}
-          />
-        </Section>
+        {/* 1. Primary Action Card -- ALL statuses */}
+        <ProjectPrimaryAction
+          project={project}
+          token={token}
+          onApprove={handleApprove}
+          onRevise={handleRevision}
+          actionLoading={actionLoading}
+        />
 
-        {/* Specification */}
-        {project.spec_content && (
-          <Section label="Documentation" title="Specification">
-            <ProjectSpecReader specContent={project.spec_content} />
+        {/* Stage indicator -- ALL statuses */}
+        <div className="flex justify-center">
+          <ProjectStageIndicator status={project.status} />
+        </div>
+
+        {/* 2. Preview / Site Access */}
+        {showPreview(s, hasPreviewUrl) && (
+          <Section id="preview" label="Deliverable" title={s === "live" ? "Your Website" : "Preview"}>
+            {previewUrl ? (
+              <PreviewFrame url={previewUrl} tall={s === "review_ready"} />
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-border/40 bg-muted/20 py-16 text-center">
+                <svg className="mb-4 h-8 w-8 text-muted-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                </svg>
+                <p className="text-sm text-muted-foreground">Preview will appear when your site build is ready</p>
+              </div>
+            )}
           </Section>
         )}
 
-        {/* Contract */}
-        <Section label="Legal" title="Contract">
-          <ProjectContractViewer token={token} />
-        </Section>
-
-        {/* Before/After Comparison */}
-        {project.original_screenshot_url && project.deliverables?.preview_url && (
+        {/* 3. Before / After */}
+        {showBeforeAfter(s, hasOriginalScreenshot, hasPreviewUrl) && (
           <Section label="Comparison" title="Before / After">
             <ProjectBeforeAfter
-              originalUrl={project.original_screenshot_url}
-              previewUrl={project.deliverables.preview_url}
+              originalUrl={project.original_screenshot_url!}
+              previewUrl={project.deliverables!.preview_url!}
             />
           </Section>
         )}
 
-        {/* Preview */}
-        <Section label="Deliverable" title="Preview">
-          {project.deliverables?.preview_url ? (
-            <PreviewFrame url={project.deliverables.preview_url} />
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-border/40 bg-muted/20 py-16 text-center">
-              {project.status === "live" ? (
-                <>
-                  <svg className="mb-4 h-8 w-8 text-emerald-500/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p className="text-sm text-muted-foreground">Your website has been delivered. Contact us if you need the preview link updated.</p>
-                </>
-              ) : (
-                <>
-                  <svg className="mb-4 h-8 w-8 text-muted-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
-                  </svg>
-                  <p className="text-sm text-muted-foreground">Preview will appear when your site build is ready</p>
-                </>
-              )}
-            </div>
-          )}
-        </Section>
+        {/* 4. Delivery Timeline (stage indicator replaces the full timeline for non-live) */}
+        {/* The compact stage indicator above serves this role. No full timeline shown. */}
 
-        {/* Review actions */}
-        {showActions && (
-          <Section label="Action Required" title="Review">
-            <p className="mb-6 text-sm leading-[1.7] text-muted-foreground">
-              Your project is ready for review. Approve to finalize, or request revisions.
-            </p>
-            <div className="flex items-center gap-6">
-              <button
-                onClick={handleApprove}
-                disabled={actionLoading}
-                className="group inline-flex items-center gap-2 text-sm text-foreground transition-all duration-200 disabled:opacity-30"
-              >
-                <span className="relative">
-                  Approve
-                  <span className="absolute inset-x-0 -bottom-0.5 h-px bg-emerald-500" />
-                </span>
-                <svg className="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setRevisionOpen(true)}
-                disabled={actionLoading}
-                className="group inline-flex items-center gap-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground disabled:opacity-30"
-              >
-                <span className="relative">
-                  Request Revision
-                  <span className="absolute inset-x-0 -bottom-0.5 h-px bg-muted-foreground/40 transition-colors duration-200 group-hover:bg-primary" />
-                </span>
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-            </div>
+        {/* 5. Specification */}
+        {showSpec(s, hasSpecContent) && (
+          <Section id="specification" label="Documentation" title="Specification">
+            <ProjectSpecReader specContent={project.spec_content!} />
           </Section>
         )}
 
-        {/* CMS Onboarding */}
-        {project.deliverables?.sanity_studio_url && (
-          <Section label="Setup" title="CMS">
-            <ProjectCmsOnboarding
-              sanityStudioUrl={project.deliverables.sanity_studio_url}
-            />
-          </Section>
-        )}
-
-        {/* Messages */}
+        {/* 6. Messages -- ALL statuses */}
         <Section label="Communication" title="Messages">
           <MessageThread
             messages={project.messages || []}
@@ -538,37 +468,8 @@ export function ProjectDetail() {
           />
         </Section>
 
-        {/* Activity Feed */}
-        <Section label="History" title="Activity">
-          <ProjectActivityFeed token={token} />
-        </Section>
-
-        {/* Deliverables */}
-        {project.deliverables?.urls && project.deliverables.urls.length > 0 && (
-          <Section label="Files" title="Deliverables">
-            <ul className="space-y-3">
-              {project.deliverables.urls.map((d, i) => (
-                <li key={i}>
-                  <a
-                    href={d.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 text-sm text-foreground transition-colors duration-200"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5 text-primary" />
-                    <span className="relative">
-                      {d.label}
-                      <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-0 group-hover:scale-x-100" />
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        )}
-
-        {/* Domain section for live projects */}
-        {project.status === "live" && (
+        {/* 7. Domain -- live only */}
+        {showDomain(s) && (
           <Section label="Infrastructure" title="Domain">
             {(() => {
               const hasCustomDomain = project.deliverables?.urls?.some(
@@ -620,8 +521,17 @@ export function ProjectDetail() {
           </Section>
         )}
 
-        {/* What's Next upsell for delivered projects */}
-        {project.status === "live" && (
+        {/* 8. CMS -- live only */}
+        {showCms(s, hasSanityUrl) && (
+          <Section label="Setup" title="CMS">
+            <ProjectCmsOnboarding
+              sanityStudioUrl={project.deliverables!.sanity_studio_url!}
+            />
+          </Section>
+        )}
+
+        {/* 9. What's Next upsell -- live only */}
+        {showUpsell(s) && (
           <Section label="Opportunity" title="What&apos;s Next?">
             <div className="grid gap-3 sm:grid-cols-3">
               <Link
@@ -656,42 +566,41 @@ export function ProjectDetail() {
             </div>
           </Section>
         )}
-      </div>
 
-      {/* Revision dialog */}
-      <Dialog open={revisionOpen} onOpenChange={setRevisionOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="font-light tracking-[-0.02em]">Request Revision</DialogTitle>
-          </DialogHeader>
-          <textarea
-            placeholder="What changes would you like?"
-            value={revisionMsg}
-            onChange={(e) => setRevisionMsg(e.target.value)}
-            rows={4}
-            className="w-full resize-none border-0 border-b border-border/60 bg-transparent px-0 py-3 text-sm text-foreground placeholder-muted-foreground/40 outline-none transition-colors duration-300 focus:border-primary/60"
-            style={{ fontFamily: "var(--font-aspekta)" }}
-          />
-          <DialogFooter>
-            <button
-              onClick={() => setRevisionOpen(false)}
-              className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleRevision}
-              disabled={actionLoading || !revisionMsg.trim()}
-              className="group inline-flex items-center gap-2 text-sm text-foreground transition-all duration-200 disabled:opacity-30"
-            >
-              <span className="relative">
-                Submit
-                <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary" />
-              </span>
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* 10. Contract -- ALL statuses */}
+        <Section label="Legal" title="Contract">
+          <ProjectContractViewer token={token} />
+        </Section>
+
+        {/* 11. Activity -- ALL statuses */}
+        <Section label="History" title="Activity">
+          <ProjectActivityFeed token={token} />
+        </Section>
+
+        {/* 12. Deliverables -- live only */}
+        {showDeliverables(s, hasDeliverableUrls) && (
+          <Section label="Files" title="Deliverables">
+            <ul className="space-y-3">
+              {project.deliverables!.urls!.map((d, i) => (
+                <li key={i}>
+                  <a
+                    href={d.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2 text-sm text-foreground transition-colors duration-200"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 text-primary" />
+                    <span className="relative">
+                      {d.label}
+                      <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-0 group-hover:scale-x-100" />
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+      </div>
     </div>
   );
 }
