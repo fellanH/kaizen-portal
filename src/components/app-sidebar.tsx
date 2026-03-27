@@ -59,16 +59,41 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border px-5 py-6">
-        <Link href="/projects" className="flex items-center gap-2.5">
-          <span
-            className="text-lg font-light tracking-tight text-primary"
-            style={{ letterSpacing: "-0.03em", fontFamily: "var(--font-aspekta)" }}
+        <Link href="/projects" className="flex items-center gap-3">
+          {/* Kaizen K mark */}
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="shrink-0"
+            aria-hidden="true"
           >
-            Kaizen
-          </span>
-          <span className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
-            Portal
-          </span>
+            <rect width="32" height="32" rx="4" fill="currentColor" className="text-primary" />
+            <g clipPath="url(#k-mark-clip)">
+              <path d="M7.27295 4.36377V27.6365H9.21329V4.36377" fill="var(--background, #fafafa)"/>
+              <path d="M14.3838 4.36377L11.9583 15.2804C11.8541 15.7542 11.8541 16.2438 11.9583 16.7176L14.3838 27.6342H12.2281L9.99306 16.6586C9.90466 16.2234 9.90466 15.7723 9.99306 15.3371L12.2281 4.36377" fill="var(--background, #fafafa)"/>
+              <path d="M19.5566 4.36377L14.9777 15.1104C14.7352 15.6771 14.7352 16.3186 14.9777 16.8876L19.5566 27.6342H17.4009L12.822 16.8876C12.5795 16.3209 12.5795 15.6794 12.822 15.1104L17.4009 4.36377" fill="var(--background, #fafafa)"/>
+              <path d="M24.7269 4.36377L18.1602 14.7931C17.6955 15.532 17.6955 16.4705 18.1602 17.2094L24.7269 27.6388H22.7866L16.043 17.2366C15.5579 16.4864 15.5579 15.5207 16.043 14.7704L22.7866 4.36377" fill="var(--background, #fafafa)"/>
+            </g>
+            <defs>
+              <clipPath id="k-mark-clip">
+                <rect width="17.454" height="23.2727" fill="white" transform="translate(7.27295 4.36377)"/>
+              </clipPath>
+            </defs>
+          </svg>
+          <div className="flex items-baseline gap-1.5">
+            <span
+              className="text-lg font-light tracking-tight text-foreground"
+              style={{ letterSpacing: "-0.03em", fontFamily: "var(--font-aspekta)" }}
+            >
+              Kaizen
+            </span>
+            <span className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+              Portal
+            </span>
+          </div>
         </Link>
       </SidebarHeader>
 
