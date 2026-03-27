@@ -14,6 +14,7 @@ import { ProjectActivityFeed } from "@/components/project-activity-feed";
 import { ProjectCmsOnboarding } from "@/components/project-cms-onboarding";
 import { ProjectPrimaryAction } from "@/components/project-primary-action";
 import { ProjectStageIndicator } from "@/components/project-stage-indicator";
+import { ProjectLaunchFlow } from "@/components/project-launch-flow";
 
 /* ── Status config with semantic colors ── */
 const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
@@ -260,6 +261,7 @@ export function ProjectDetail() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [launchDismissed, setLaunchDismissed] = useState(true); // default true to avoid flash
 
   const fetchProject = useCallback(() => {
     if (!token) return;
@@ -302,6 +304,13 @@ export function ProjectDetail() {
       document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [fetchProject, token]);
+
+  useEffect(() => {
+    if (project?.status === "live" && token) {
+      const key = `kaizen_launch_dismissed_${token}`;
+      setLaunchDismissed(localStorage.getItem(key) === "true");
+    }
+  }, [project?.status, token]);
 
   async function handleApprove() {
     if (!token) return;
@@ -347,6 +356,19 @@ export function ProjectDetail() {
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <p className="text-sm text-muted-foreground">Project not found.</p>
       </div>
+    );
+  }
+
+  // Launch flow for freshly-live projects (first visit after approval)
+  if (project.status === "live" && !launchDismissed) {
+    return (
+      <ProjectLaunchFlow
+        project={project}
+        onComplete={() => {
+          localStorage.setItem(`kaizen_launch_dismissed_${token}`, "true");
+          setLaunchDismissed(true);
+        }}
+      />
     );
   }
 
