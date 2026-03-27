@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, CheckCircle2, Check } from "lucide-react";
 
 const STRIPE_LINKS: Record<string, string> = {
@@ -91,17 +89,6 @@ export default function NewProjectPage() {
     if (!company.trim()) return;
     setSubmitting(true);
     try {
-      await api.submitProject({
-        company: company.trim(),
-        name: `${company.trim()} - ${selectedTier.label}`,
-        email: email || "",
-        url: url.trim() || undefined,
-        type,
-        tier,
-        description: description.trim(),
-        timeline: selectedTier.timeline,
-      });
-
       const stripeUrl = new URL(STRIPE_LINKS[tier]);
       if (email) {
         stripeUrl.searchParams.set("prefilled_email", email);
@@ -110,8 +97,6 @@ export default function NewProjectPage() {
 
       window.open(stripeUrl.toString(), "_blank");
       setSubmitted(true);
-    } catch {
-      toast.error("Failed to submit project request");
     } finally {
       setSubmitting(false);
     }
@@ -128,11 +113,11 @@ export default function NewProjectPage() {
             className="text-xl font-light tracking-tight text-foreground"
             style={{ letterSpacing: "-0.02em" }}
           >
-            Your project has been created
+            Complete your payment
           </h1>
           <p className="mt-3 max-w-sm text-sm leading-[1.7] text-muted-foreground">
-            Payment is being processed. You&apos;ll see the project in your
-            dashboard shortly.
+            Complete your payment in the Stripe tab to start your project. Once
+            payment is confirmed, your project will appear in your dashboard.
           </p>
           <div className="mt-6 flex items-center gap-4 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">
