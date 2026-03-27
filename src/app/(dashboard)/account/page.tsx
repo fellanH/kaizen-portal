@@ -452,14 +452,14 @@ function Section({
 export default function AccountPage() {
   const { email, logout } = useAuth();
 
-  const initials = email
-    ? email
-        .split("@")[0]
-        .split(/[._-]/)
-        .map((s) => s[0]?.toUpperCase() || "")
-        .join("")
-        .slice(0, 2)
+  const emailPrefix = email?.split("@")[0] || "";
+  const nameParts = emailPrefix.split(/[._-]/).filter(Boolean);
+  const initials = nameParts.length > 0
+    ? nameParts.length === 1
+      ? nameParts[0][0]?.toUpperCase() || "?"
+      : (nameParts[0][0]?.toUpperCase() + nameParts[nameParts.length - 1][0]?.toUpperCase()) || "?"
     : "?";
+  const displayName = nameParts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10 sm:px-8 sm:py-14">
@@ -495,7 +495,7 @@ export default function AccountPage() {
               {initials}
             </div>
             <div>
-              <p className="text-sm font-light">{email?.split("@")[0]}</p>
+              <p className="text-sm font-light">{displayName}</p>
               <p className="text-xs text-muted-foreground">{email}</p>
             </div>
           </div>

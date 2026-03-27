@@ -48,14 +48,14 @@ export function AppSidebar() {
     { title: "Account", href: "/account", icon: User, badge: null },
   ];
 
-  const initials = email
-    ? email
-        .split("@")[0]
-        .split(/[._-]/)
-        .map((s) => s[0]?.toUpperCase() || "")
-        .join("")
-        .slice(0, 2)
+  const emailPrefix = email?.split("@")[0] || "";
+  const nameParts = emailPrefix.split(/[._-]/).filter(Boolean);
+  const initials = nameParts.length > 0
+    ? nameParts.length === 1
+      ? nameParts[0][0]?.toUpperCase() || "?"
+      : (nameParts[0][0]?.toUpperCase() + nameParts[nameParts.length - 1][0]?.toUpperCase()) || "?"
     : "?";
+  const displayName = nameParts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
 
   return (
     <Sidebar>
@@ -132,7 +132,7 @@ export function AppSidebar() {
           </div>
           <div className="min-w-0 flex-1">
             <span className="block truncate text-sm font-light text-foreground/90">
-              {email?.split("@")[0]}
+              {displayName}
             </span>
             <span className="block truncate text-[0.6rem] text-muted-foreground/50">
               {email}

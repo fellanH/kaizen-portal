@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectDeliveryTimeline } from "@/components/project-delivery-timeline";
 import { ProjectSpecReader } from "@/components/project-spec-reader";
@@ -72,13 +72,20 @@ function MessageThread({
               <div
                 className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-[1.6] ${
                   msg.from === "client"
-                    ? "bg-primary/10 text-foreground"
-                    : "bg-muted text-foreground"
+                    ? "bg-muted/80 text-foreground"
+                    : "bg-primary/10 text-foreground border border-primary/10"
                 }`}
               >
                 <p>{msg.text}</p>
-                <p className="mt-1.5 text-[10px] text-muted-foreground">
-                  {msg.from === "kaizen" ? "Kaizen" : "You"} · {new Date(msg.created_at).toLocaleString()}
+                <p className="mt-1.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className={`inline-flex items-center rounded-full px-1.5 py-px text-[9px] font-medium ${
+                    msg.from === "kaizen"
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}>
+                    {msg.from === "kaizen" ? "Kaizen" : "You"}
+                  </span>
+                  {new Date(msg.created_at).toLocaleString()}
                 </p>
               </div>
             </div>
@@ -375,11 +382,18 @@ export function ProjectDetail() {
         )}
 
         {/* Preview */}
-        {project.deliverables?.preview_url && (
-          <Section label="Deliverable" title="Preview">
+        <Section label="Deliverable" title="Preview">
+          {project.deliverables?.preview_url ? (
             <PreviewFrame url={project.deliverables.preview_url} />
-          </Section>
-        )}
+          ) : (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-border/40 bg-muted/20 py-16 text-center">
+              <svg className="mb-4 h-8 w-8 text-muted-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+              </svg>
+              <p className="text-sm text-muted-foreground">Preview will appear when your site build is ready</p>
+            </div>
+          )}
+        </Section>
 
         {/* Review actions */}
         {showActions && (
@@ -410,6 +424,7 @@ export function ProjectDetail() {
                   Request Revision
                   <span className="absolute inset-x-0 -bottom-0.5 h-px bg-muted-foreground/40 transition-colors duration-200 group-hover:bg-primary" />
                 </span>
+                <Pencil className="h-3.5 w-3.5" />
               </button>
             </div>
           </Section>

@@ -99,7 +99,7 @@ export function ProjectDeliveryTimeline({
         {/* Filled portion: use emerald for delivered, primary otherwise */}
         <div
           className={`timeline-fill absolute top-4 left-0 h-1 rounded-full ${
-            isDelivered ? "bg-emerald-500" : "bg-primary"
+            isDelivered ? "bg-emerald-500" : "bg-emerald-500/80"
           }`}
           style={{
             width: isDelivered
@@ -131,9 +131,9 @@ export function ProjectDeliveryTimeline({
             <div
               className={`h-3 w-3 rounded-full border-2 transition-colors duration-500 ${
                 m.reached
-                  ? m.key === "live"
-                    ? "border-emerald-500 bg-emerald-500"
-                    : "border-primary bg-primary"
+                  ? m.active
+                    ? "border-primary bg-primary"
+                    : "border-emerald-500 bg-emerald-500"
                   : "border-muted-foreground/30 bg-background"
               } ${m.active ? "milestone-pulse" : ""}`}
             />
@@ -142,7 +142,7 @@ export function ProjectDeliveryTimeline({
                 m.active
                   ? "font-semibold text-primary"
                   : m.reached
-                    ? "text-foreground"
+                    ? "font-medium text-emerald-600 dark:text-emerald-400"
                     : "text-muted-foreground"
               }`}
             >

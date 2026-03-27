@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api, type ProjectEvent } from "@/lib/api";
+import { Clock } from "lucide-react";
 import { toast } from "sonner";
 
 const EVENT_ICONS: Record<string, string> = {
@@ -66,9 +67,13 @@ export function ProjectActivityFeed({ token }: { token: string }) {
 
   if (events.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        No activity yet.
-      </p>
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+          <Clock className="h-5 w-5 text-muted-foreground/40" />
+        </div>
+        <p className="text-sm text-foreground/80">No activity yet</p>
+        <p className="mt-1 text-xs text-muted-foreground">Events will appear here as your project progresses.</p>
+      </div>
     );
   }
 

@@ -173,7 +173,7 @@ export default function MessagesPage() {
                               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
                                 msg.from === "kaizen"
                                   ? "status-orange"
-                                  : "bg-[#e85325]/10 text-[#e85325]"
+                                  : "bg-muted text-muted-foreground ring-1 ring-border/60"
                               }`}
                             >
                               {msg.from === "kaizen" ? "Kaizen" : "You"}

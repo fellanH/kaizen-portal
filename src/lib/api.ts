@@ -73,6 +73,13 @@ export interface ContractResponse {
   accepted_at: string | null;
 }
 
+/** Raw message shape from intake-api: uses 'at' (not 'created_at'), no 'id' field */
+interface MessageRaw {
+  from: "client" | "kaizen";
+  text: string;
+  at: string;
+}
+
 /** Raw shape from intake-api. Fields: company, name, email (not company_name etc.) */
 interface ProjectRaw {
   token: string;
@@ -84,7 +91,7 @@ interface ProjectRaw {
   created_at: string;
   updated_at: string;
   spec_content?: string;
-  messages?: Message[];
+  messages?: MessageRaw[];
   deliverables?: {
     preview_url?: string;
     urls?: { label: string; url: string }[];
@@ -97,16 +104,33 @@ interface ProjectRaw {
 }
 
 /** Normalized project with consistent field names used throughout the portal */
-export interface Project extends Omit<ProjectRaw, "company" | "name" | "email"> {
+export interface Project extends Omit<ProjectRaw, "company" | "name" | "email" | "messages"> {
   company_name: string;
   contact_name: string;
   contact_email: string;
+  messages?: Message[];
+}
+
+/** Normalize a raw message: map 'at' -> 'created_at', generate synthetic id */
+function normalizeMessage(raw: MessageRaw, index: number): Message {
+  return {
+    id: `msg-${index}`,
+    from: raw.from,
+    text: raw.text,
+    created_at: raw.at,
+  };
 }
 
 /** Map API response to portal's expected shape */
 function normalizeProject(raw: ProjectRaw): Project {
-  const { company, name, email, ...rest } = raw;
-  return { ...rest, company_name: company || "Untitled", contact_name: name || "", contact_email: email || "" };
+  const { company, name, email, messages, ...rest } = raw;
+  return {
+    ...rest,
+    company_name: company || "Untitled",
+    contact_name: name || "",
+    contact_email: email || "",
+    messages: messages?.map(normalizeMessage),
+  };
 }
 
 export interface Message {

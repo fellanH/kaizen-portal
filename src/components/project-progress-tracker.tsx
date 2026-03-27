@@ -49,7 +49,7 @@ export function ProjectProgressTracker({
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="progress-bar-fill h-full rounded-full bg-primary"
+            className="progress-bar-fill h-full rounded-full bg-emerald-500"
             style={{ width: `${completionPercent}%` }}
           />
         </div>
@@ -69,7 +69,7 @@ export function ProjectProgressTracker({
                   <div
                     className={`absolute right-1/2 top-1/2 h-0.5 -translate-y-1/2 ${
                       isCompleted || isCurrent
-                        ? "bg-primary stage-line-fill"
+                        ? "bg-emerald-500 stage-line-fill"
                         : "bg-muted"
                     }`}
                     style={{
