@@ -32,7 +32,7 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString();
 }
 
-export function ProjectActivityFeed({ token }: { token: string }) {
+export function ProjectActivityFeed({ token, createdAt }: { token: string; createdAt?: string }) {
   const [events, setEvents] = useState<ProjectEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -65,7 +65,20 @@ export function ProjectActivityFeed({ token }: { token: string }) {
     );
   }
 
-  if (events.length === 0) {
+  // Prepend synthetic "Project submitted" event from createdAt
+  const allEvents = createdAt
+    ? [
+        ...events,
+        {
+          type: "stage_change" as const,
+          description: "Project submitted",
+          actor: "client" as const,
+          at: createdAt,
+        },
+      ]
+    : events;
+
+  if (allEvents.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
@@ -77,7 +90,7 @@ export function ProjectActivityFeed({ token }: { token: string }) {
     );
   }
 
-  const displayed = showAll ? events : events.slice(0, 5);
+  const displayed = showAll ? allEvents : allEvents.slice(0, 5);
 
   return (
     <div className="space-y-1">
@@ -107,7 +120,7 @@ export function ProjectActivityFeed({ token }: { token: string }) {
         ))}
       </div>
 
-      {events.length > 5 && !showAll && (
+      {allEvents.length > 5 && !showAll && (
         <button
           onClick={() => setShowAll(true)}
           className="group mt-2 inline-flex w-full items-center justify-center text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"

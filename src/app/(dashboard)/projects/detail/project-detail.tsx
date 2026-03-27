@@ -33,6 +33,25 @@ const tierLabels: Record<string, string> = {
   premium: "Premium",
 };
 
+/* ── Message consolidation: merge rapid-fire messages (<60s, same sender) ── */
+function consolidateMessages(msgs: Message[]): Message[] {
+  const result: Message[] = [];
+  for (const msg of msgs) {
+    const prev = result[result.length - 1];
+    if (prev && prev.from === msg.from) {
+      const gap = Math.abs(
+        new Date(msg.created_at).getTime() - new Date(prev.created_at).getTime()
+      );
+      if (gap < 60000) {
+        prev.text = prev.text + "\n" + msg.text;
+        continue;
+      }
+    }
+    result.push({ ...msg });
+  }
+  return result;
+}
+
 /* ── Message Thread ── */
 function MessageThread({
   messages,
@@ -43,6 +62,7 @@ function MessageThread({
 }) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const consolidated = consolidateMessages(messages);
 
   async function handleSend() {
     if (!text.trim()) return;
@@ -60,12 +80,12 @@ function MessageThread({
   return (
     <div className="space-y-4">
       <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
-        {messages.length === 0 ? (
+        {consolidated.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
             No messages yet.
           </p>
         ) : (
-          messages.map((msg, i) => (
+          consolidated.map((msg, i) => (
             <div
               key={msg.id}
               className={`msg-bubble flex ${msg.from === "client" ? "justify-end" : "justify-start"}`}
@@ -78,7 +98,9 @@ function MessageThread({
                     : "bg-primary/10 text-foreground border border-primary/10"
                 }`}
               >
-                <p>{msg.text}</p>
+                {msg.text.split("\n").map((line, li) => (
+                  <p key={li}>{line}</p>
+                ))}
                 <p className="mt-1.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   <span className={`inline-flex items-center rounded-full px-1.5 py-px text-[9px] font-medium ${
                     msg.from === "kaizen"
@@ -443,6 +465,13 @@ export function ProjectDetail() {
           actionLoading={actionLoading}
         />
 
+        {/* Spec section promoted above timeline when spec exists for early statuses */}
+        {(s === "intake_received" || s === "spec_writing") && hasSpecContent && (
+          <Section id="specification" label="Documentation" title="Specification">
+            <ProjectSpecReader specContent={project.spec_content!} />
+          </Section>
+        )}
+
         {/* Stage indicator -- ALL statuses */}
         <div className="flex justify-center">
           <ProjectStageIndicator status={project.status} />
@@ -477,8 +506,8 @@ export function ProjectDetail() {
         {/* 4. Delivery Timeline (stage indicator replaces the full timeline for non-live) */}
         {/* The compact stage indicator above serves this role. No full timeline shown. */}
 
-        {/* 5. Specification */}
-        {showSpec(s, hasSpecContent) && (
+        {/* 5. Specification (only if not already promoted above) */}
+        {showSpec(s, hasSpecContent) && s !== "intake_received" && s !== "spec_writing" && (
           <Section id="specification" label="Documentation" title="Specification">
             <ProjectSpecReader specContent={project.spec_content!} />
           </Section>
@@ -607,7 +636,7 @@ export function ProjectDetail() {
 
         {/* 11. Activity -- ALL statuses */}
         <Section label="History" title="Activity">
-          <ProjectActivityFeed token={token} />
+          <ProjectActivityFeed token={token} createdAt={project.created_at} />
         </Section>
 
         {/* 12. Deliverables -- live only */}

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { api, type ContractResponse } from "@/lib/api";
-import { toast } from "sonner";
 
 export function ProjectContractViewer({ token }: { token: string }) {
   const [data, setData] = useState<ContractResponse | null>(null);
@@ -18,7 +17,6 @@ export function ProjectContractViewer({ token }: { token: string }) {
       .then(setData)
       .catch(() => {
         setError(true);
-        toast.error("Failed to load contract");
       })
       .finally(() => setLoading(false));
   }, [token]);
@@ -84,19 +82,7 @@ export function ProjectContractViewer({ token }: { token: string }) {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 px-4 py-3">
-        <p className="flex-1 text-sm text-muted-foreground">Failed to load contract.</p>
-        <button
-          onClick={() => { setLoading(true); setError(false); api.getContract(token).then(setData).catch(() => { setError(true); toast.error("Failed to load contract"); }).finally(() => setLoading(false)); }}
-          className="text-xs text-primary transition-colors duration-200 hover:text-primary/80"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+  if (error) return null;
 
   if (!data) return null;
 

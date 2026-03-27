@@ -20,46 +20,89 @@ interface PrimaryActionProps {
   actionLoading: boolean;
 }
 
-const cardConfig: Record<
+const cardStyle: Record<
   string,
-  { accent: string; border: string; bg: string; heading: string; body: string }
+  { accent: string; border: string; bg: string }
 > = {
   intake_received: {
     accent: "border-l-muted-foreground/40",
     border: "border-border/60",
     bg: "bg-muted/20",
-    heading: "We've received your request",
-    body: "Your project is being reviewed. We'll start scoping within 24 hours.",
   },
   spec_writing: {
     accent: "border-l-amber-500",
     border: "border-amber-500/20",
     bg: "bg-amber-500/[0.04]",
-    heading: "Your project is being scoped",
-    body: "We're writing the specification for your site. You'll be able to review it soon.",
   },
   building: {
     accent: "border-l-blue-500",
     border: "border-blue-500/20",
     bg: "bg-blue-500/[0.04]",
-    heading: "Your site is being built",
-    body: "Development is underway. You can preview progress below.",
   },
   review_ready: {
     accent: "border-l-primary",
     border: "border-primary/20",
     bg: "bg-primary/[0.04]",
-    heading: "Your site is ready for review",
-    body: "Review the preview below and let us know if it's what you had in mind.",
   },
   live: {
     accent: "border-l-emerald-500",
     border: "border-emerald-500/20",
     bg: "bg-emerald-500/[0.04]",
-    heading: "Your website is live",
-    body: "",
   },
 };
+
+function getCardContent(project: Project): { heading: string; body: string } {
+  const previewUrl = project.deliverables?.preview_url;
+  const website = (project as unknown as Record<string, unknown>).website as string | undefined;
+
+  switch (project.status) {
+    case "intake_received":
+      if (project.spec_content) {
+        return {
+          heading: "Your project specification is ready",
+          body: "We've analyzed your requirements and prepared a detailed specification for your review.",
+        };
+      }
+      if (website) {
+        return {
+          heading: `We're analyzing ${website}`,
+          body: "Your project specification will be ready soon.",
+        };
+      }
+      return {
+        heading: "We've received your request",
+        body: "Your project is being reviewed. We'll start scoping within 24 hours.",
+      };
+    case "spec_writing":
+      return {
+        heading: "Your project is being scoped",
+        body: "We're writing the specification for your site. You'll be able to review it soon.",
+      };
+    case "building":
+      if (previewUrl) {
+        return {
+          heading: "Your site is being built",
+          body: "Development is underway based on your approved specification.",
+        };
+      }
+      return {
+        heading: "Your site is being built",
+        body: "Development is underway based on your approved specification. We'll notify you when the preview is ready.",
+      };
+    case "review_ready":
+      return {
+        heading: "Your site is ready for review",
+        body: "Review the preview below and let us know if it's what you had in mind.",
+      };
+    case "live":
+      return { heading: "Your website is live", body: "" };
+    default:
+      return {
+        heading: "We've received your request",
+        body: "Your project is being reviewed. We'll start scoping within 24 hours.",
+      };
+  }
+}
 
 export function ProjectPrimaryAction({
   project,
@@ -71,7 +114,8 @@ export function ProjectPrimaryAction({
   const [revisionOpen, setRevisionOpen] = useState(false);
   const [revisionMsg, setRevisionMsg] = useState("");
 
-  const cfg = cardConfig[project.status] || cardConfig.intake_received;
+  const style = cardStyle[project.status] || cardStyle.intake_received;
+  const content = getCardContent(project);
   const previewUrl = project.deliverables?.preview_url;
 
   async function handleRevision() {
@@ -88,10 +132,10 @@ export function ProjectPrimaryAction({
   return (
     <>
       <div
-        className={`overflow-hidden rounded-xl border ${cfg.border} ${cfg.bg} border-l-4 ${cfg.accent}`}
+        className={`overflow-hidden rounded-xl border ${style.border} ${style.bg} border-l-4 ${style.accent}`}
       >
         <div className="p-5 sm:p-6">
-          <p className="text-sm font-medium text-foreground">{cfg.heading}</p>
+          <p className="text-sm font-medium text-foreground">{content.heading}</p>
 
           {/* Body text or live URL */}
           {project.status === "live" && previewUrl ? (
@@ -111,8 +155,21 @@ export function ProjectPrimaryAction({
             </div>
           ) : (
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              {cfg.body}
+              {content.body}
             </p>
+          )}
+
+          {/* View Specification button for intake_received with spec ready */}
+          {project.status === "intake_received" && project.spec_content && (
+            <a
+              href="#specification"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs text-foreground transition-colors duration-200 hover:text-primary"
+            >
+              <span className="relative">
+                View Specification
+                <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary" />
+              </span>
+            </a>
           )}
 
           {/* Spec link for spec_writing */}
@@ -133,6 +190,24 @@ export function ProjectPrimaryAction({
             >
               View Preview
             </a>
+          )}
+
+          {/* Preview URL prominently in review_ready card */}
+          {project.status === "review_ready" && previewUrl && (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-primary transition-colors duration-200 hover:text-primary/80"
+              >
+                <ExternalLink className="h-3 w-3" />
+                <span className="relative">
+                  {previewUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                  <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary/40" />
+                </span>
+              </a>
+            </div>
           )}
 
           {/* Approve / Revise for review_ready */}
