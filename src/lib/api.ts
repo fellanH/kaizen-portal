@@ -181,6 +181,42 @@ export interface AnalyticsSummary {
   daily_views: { date: string; views: number }[];
 }
 
+/** Raw shape from GET /project/:token/telemetry */
+interface TelemetryResponse {
+  token: string;
+  period: { from: string; to: string };
+  summary: {
+    total_sessions: number;
+    total_page_views: number;
+    total_clicks: number;
+    avg_session_duration_ms: number;
+    avg_scroll_depth: number;
+    top_pages: { url: string; views: number }[];
+    top_clicks: { target: string; text: string; count: number }[];
+  };
+  daily: { date: string; sessions: number; page_views: number }[];
+}
+
+/** Map telemetry API response to the portal AnalyticsSummary shape */
+function mapTelemetryToAnalytics(raw: TelemetryResponse): AnalyticsSummary {
+  const avgDepth = Math.round(raw.summary.avg_scroll_depth);
+  return {
+    period: { start: raw.period.from, end: raw.period.to },
+    page_views: raw.summary.total_page_views,
+    unique_visitors: raw.summary.total_sessions,
+    avg_session_duration_ms: raw.summary.avg_session_duration_ms,
+    top_pages: raw.summary.top_pages,
+    scroll_depth: [
+      { depth: 25, count: Math.round(raw.summary.total_page_views * Math.min(avgDepth / 25, 1)) },
+      { depth: 50, count: Math.round(raw.summary.total_page_views * Math.min(avgDepth / 50, 1)) },
+      { depth: 75, count: Math.round(raw.summary.total_page_views * Math.min(avgDepth / 75, 1)) },
+      { depth: 100, count: Math.round(raw.summary.total_page_views * Math.min(avgDepth / 100, 1)) },
+    ],
+    top_clicks: raw.summary.top_clicks,
+    daily_views: raw.daily.map((d) => ({ date: d.date, views: d.page_views })),
+  };
+}
+
 function generateMockAnalytics(period: "7d" | "30d" | "all"): AnalyticsSummary {
   const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
   const end = new Date();
@@ -311,10 +347,32 @@ export const api = {
   },
 
   async getAnalytics(projectToken: string, period: "7d" | "30d" | "all" = "7d"): Promise<AnalyticsSummary> {
-    // TODO: wire to GET /project/{token}/analytics?period= when backend ships
-    // For now, return deterministic mock data seeded by token
-    await new Promise((r) => setTimeout(r, 300)); // simulate network
-    return generateMockAnalytics(period);
+    const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+    try {
+      const raw = await request<TelemetryResponse>(
+        `/project/${projectToken}/telemetry?days=${days}`
+      );
+      if (raw.summary.total_page_views === 0 && raw.summary.total_sessions === 0) {
+        return generateMockAnalytics(period);
+      }
+      return mapTelemetryToAnalytics(raw);
+    } catch {
+      return generateMockAnalytics(period);
+    }
+  },
+
+  async getProjectAnalytics(token: string, days = 7): Promise<AnalyticsSummary | null> {
+    try {
+      const raw = await request<TelemetryResponse>(
+        `/project/${token}/telemetry?days=${days}`
+      );
+      if (raw.summary.total_page_views === 0 && raw.summary.total_sessions === 0) {
+        return null;
+      }
+      return mapTelemetryToAnalytics(raw);
+    } catch {
+      return null;
+    }
   },
 
   submitProject(data: {

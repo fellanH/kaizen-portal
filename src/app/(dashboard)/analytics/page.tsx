@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { BarChart3, Eye, Users, Clock, ArrowDown } from "lucide-react";
 import { api, type AnalyticsSummary } from "@/lib/api";
 import { useProjects } from "@/lib/projects-context";
@@ -265,6 +266,7 @@ function AnalyticsSkeleton() {
 
 /* ── Main page ── */
 export default function AnalyticsPage() {
+  const searchParams = useSearchParams();
   const { projects, loading: projectsLoading } = useProjects();
   const [period, setPeriod] = useState<Period>("7d");
   const [selectedToken, setSelectedToken] = useState<string>("");
@@ -272,12 +274,14 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [isEmpty, setIsEmpty] = useState(false);
 
-  // Default to first project
+  // Default to query param project, or first project
   useEffect(() => {
     if (projects.length > 0 && !selectedToken) {
-      setSelectedToken(projects[0].token);
+      const paramToken = searchParams.get("project");
+      const match = paramToken && projects.find((p) => p.token === paramToken);
+      setSelectedToken(match ? match.token : projects[0].token);
     }
-  }, [projects, selectedToken]);
+  }, [projects, selectedToken, searchParams]);
 
   const fetchData = useCallback(async () => {
     if (!selectedToken) return;

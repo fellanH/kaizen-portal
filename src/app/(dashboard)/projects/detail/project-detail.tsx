@@ -16,6 +16,7 @@ import { ProjectPrimaryAction } from "@/components/project-primary-action";
 import { ProjectStageIndicator } from "@/components/project-stage-indicator";
 import { ProjectLaunchFlow } from "@/components/project-launch-flow";
 import { ProjectDomainCheck } from "@/components/project-domain-check";
+import { ProjectAnalyticsSummary } from "@/components/project-analytics-summary";
 
 /* ── Status config with semantic colors ── */
 const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
@@ -543,6 +544,13 @@ export function ProjectDetail() {
                 </div>
               );
             })()}
+          </Section>
+        )}
+
+        {/* 7b. Analytics -- live only */}
+        {s === "live" && (
+          <Section label="Performance" title="Analytics">
+            <ProjectAnalyticsSummary token={token} />
           </Section>
         )}
 
