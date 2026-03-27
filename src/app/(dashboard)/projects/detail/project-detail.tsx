@@ -24,6 +24,8 @@ const statusConfig: Record<string, { label: string; className: string; dot: stri
   spec_writing: { label: "Scoping", className: "status-amber", dot: "bg-amber-500" },
   building: { label: "Building", className: "status-blue", dot: "bg-blue-500" },
   review_ready: { label: "Review Ready", className: "status-orange", dot: "bg-primary" },
+  approved: { label: "Approved", className: "status-emerald", dot: "bg-emerald-500" },
+  revising: { label: "Revising", className: "status-amber", dot: "bg-amber-500" },
   live: { label: "Delivered", className: "status-emerald", dot: "bg-emerald-500" },
 };
 

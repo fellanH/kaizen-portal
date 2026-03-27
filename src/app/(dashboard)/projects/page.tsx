@@ -43,6 +43,18 @@ const statusConfig: Record<
     text: "text-primary",
     dot: "bg-primary",
   },
+  approved: {
+    label: "Approved",
+    bg: "bg-emerald-500/15",
+    text: "text-emerald-600 dark:text-emerald-400",
+    dot: "bg-emerald-500",
+  },
+  revising: {
+    label: "Revising",
+    bg: "bg-amber-500/15",
+    text: "text-amber-600 dark:text-amber-400",
+    dot: "bg-amber-500",
+  },
   live: {
     label: "Delivered",
     bg: "bg-emerald-500/15",

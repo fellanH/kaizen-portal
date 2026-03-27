@@ -44,6 +44,16 @@ const cardStyle: Record<
     border: "border-primary/20",
     bg: "bg-primary/[0.04]",
   },
+  approved: {
+    accent: "border-l-emerald-500",
+    border: "border-emerald-500/20",
+    bg: "bg-emerald-500/[0.04]",
+  },
+  revising: {
+    accent: "border-l-amber-500",
+    border: "border-amber-500/20",
+    bg: "bg-amber-500/[0.04]",
+  },
   live: {
     accent: "border-l-emerald-500",
     border: "border-emerald-500/20",
@@ -93,6 +103,16 @@ function getCardContent(project: Project): { heading: string; body: string } {
       return {
         heading: "Your site is ready for review",
         body: "Review the preview below and let us know if it's what you had in mind.",
+      };
+    case "approved":
+      return {
+        heading: "Your site is approved",
+        body: "We're preparing your site for launch.",
+      };
+    case "revising":
+      return {
+        heading: "We're working on your revisions",
+        body: "Your feedback has been received. We'll have an updated preview ready soon.",
       };
     case "live":
       return { heading: "Your website is live", body: "" };
