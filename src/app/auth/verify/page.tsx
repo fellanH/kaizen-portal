@@ -35,7 +35,7 @@ function VerifyContent() {
 
   if (verifying) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center dark bg-background">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-8">
           {/* Spinner */}
           <div className="relative h-10 w-10">
@@ -61,7 +61,7 @@ function VerifyContent() {
   if (error) {
     return (
       <div
-        className="flex min-h-screen flex-col items-center justify-center dark bg-background px-6"
+        className="flex min-h-screen flex-col items-center justify-center bg-background px-6"
         style={{ fontFamily: "var(--font-aspekta)" }}
       >
         <div className="flex w-full max-w-[480px] flex-col items-start">
@@ -127,7 +127,7 @@ function VerifyContent() {
 
   // Success state (brief flash before redirect)
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center dark bg-background">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-6">
         <svg
           className="h-8 w-8 text-primary"
@@ -153,7 +153,7 @@ export default function VerifyPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col items-center justify-center dark bg-background">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background">
           <div className="relative h-10 w-10">
             <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
             <div

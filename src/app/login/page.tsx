@@ -27,7 +27,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="dark flex min-h-screen flex-col items-center justify-center bg-background px-6"
+      className="flex min-h-screen flex-col items-center justify-center bg-background px-6"
       style={{ fontFamily: "var(--font-aspekta)" }}
     >
       <div className="flex w-full max-w-[480px] flex-col items-start">
