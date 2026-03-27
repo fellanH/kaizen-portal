@@ -170,6 +170,62 @@ export interface AuthUser {
   email: string;
 }
 
+export interface AnalyticsSummary {
+  period: { start: string; end: string };
+  page_views: number;
+  unique_visitors: number;
+  avg_session_duration_ms: number;
+  top_pages: { url: string; views: number }[];
+  scroll_depth: { depth: number; count: number }[];
+  top_clicks: { target: string; text: string; count: number }[];
+  daily_views: { date: string; views: number }[];
+}
+
+function generateMockAnalytics(period: "7d" | "30d" | "all"): AnalyticsSummary {
+  const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+  const end = new Date();
+  const start = new Date(end.getTime() - days * 86400000);
+
+  const daily_views: { date: string; views: number }[] = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(start.getTime() + i * 86400000);
+    daily_views.push({
+      date: d.toISOString().slice(0, 10),
+      views: Math.floor(20 + Math.random() * 80),
+    });
+  }
+
+  const totalViews = daily_views.reduce((s, d) => s + d.views, 0);
+
+  return {
+    period: { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) },
+    page_views: totalViews,
+    unique_visitors: Math.floor(totalViews * 0.6),
+    avg_session_duration_ms: 35000 + Math.floor(Math.random() * 25000),
+    top_pages: [
+      { url: "/", views: Math.floor(totalViews * 0.4) },
+      { url: "/om-oss", views: Math.floor(totalViews * 0.22) },
+      { url: "/tjanster", views: Math.floor(totalViews * 0.18) },
+      { url: "/kontakt", views: Math.floor(totalViews * 0.12) },
+      { url: "/priser", views: Math.floor(totalViews * 0.08) },
+    ],
+    scroll_depth: [
+      { depth: 25, count: Math.floor(totalViews * 0.82) },
+      { depth: 50, count: Math.floor(totalViews * 0.58) },
+      { depth: 75, count: Math.floor(totalViews * 0.34) },
+      { depth: 100, count: Math.floor(totalViews * 0.18) },
+    ],
+    top_clicks: [
+      { target: "a.cta-hero", text: "Get Started", count: Math.floor(totalViews * 0.12) },
+      { target: "a.nav-link", text: "About Us", count: Math.floor(totalViews * 0.09) },
+      { target: "a.nav-link", text: "Services", count: Math.floor(totalViews * 0.07) },
+      { target: "button.contact-submit", text: "Send Message", count: Math.floor(totalViews * 0.04) },
+      { target: "a.footer-link", text: "Privacy Policy", count: Math.floor(totalViews * 0.02) },
+    ],
+    daily_views,
+  };
+}
+
 export const api = {
   login(email: string) {
     return request<{ ok: boolean; message: string }>("/auth/login", {
@@ -252,6 +308,13 @@ export const api = {
 
   getCollaborators(token: string) {
     return request<{ collaborators: Collaborator[] }>(`/project/${token}/collaborators`);
+  },
+
+  async getAnalytics(projectToken: string, period: "7d" | "30d" | "all" = "7d"): Promise<AnalyticsSummary> {
+    // TODO: wire to GET /project/{token}/analytics?period= when backend ships
+    // For now, return deterministic mock data seeded by token
+    await new Promise((r) => setTimeout(r, 300)); // simulate network
+    return generateMockAnalytics(period);
   },
 
   setToken,

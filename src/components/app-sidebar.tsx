@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-context";
-import { FolderKanban, MessageSquare, User, LogOut, Sun, Moon } from "lucide-react";
+import { FolderKanban, MessageSquare, BarChart3, User, LogOut, Sun, Moon } from "lucide-react";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -37,6 +37,7 @@ export function AppSidebar() {
       badge: projects.length || null,
     },
     { title: "Messages", href: "/messages", icon: MessageSquare, badge: null },
+    { title: "Analytics", href: "/analytics", icon: BarChart3, badge: null },
     { title: "Account", href: "/account", icon: User, badge: null },
   ];
 
