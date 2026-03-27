@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-context";
-import { FolderKanban, MessageSquare, BarChart3, User, LogOut, Sun, Moon } from "lucide-react";
+import { FolderKanban, MessageSquare, BarChart3, User, LogOut, Sun, Moon, PlusCircle } from "lucide-react";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -30,6 +30,12 @@ export function AppSidebar() {
   useEffect(() => setMounted(true), []);
 
   const navItems = [
+    {
+      title: "New Project",
+      href: "/projects/new",
+      icon: PlusCircle,
+      badge: null,
+    },
     {
       title: "Projects",
       href: "/projects",
@@ -77,7 +83,11 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     render={<Link href={item.href} />}
-                    isActive={pathname.startsWith(item.href)}
+                    isActive={
+                      item.href === "/projects"
+                        ? pathname === "/projects" || pathname.startsWith("/projects/detail")
+                        : pathname.startsWith(item.href)
+                    }
                   >
                     <item.icon className="h-4 w-4" />
                     <span className="flex-1 text-sm font-light">{item.title}</span>

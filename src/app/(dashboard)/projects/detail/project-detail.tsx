@@ -397,6 +397,39 @@ export function ProjectDetail() {
 
       {/* ── Content sections ── */}
       <div className="mt-10 space-y-10">
+        {/* Visit Your Website card for live projects */}
+        {project.status === "live" && project.deliverables?.preview_url && (
+          <div className="overflow-hidden rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04]">
+            <div className="flex items-center gap-5 p-6">
+              <div className="hidden shrink-0 overflow-hidden rounded-lg sm:block sm:h-20 sm:w-32">
+                <img
+                  src={project.deliverables.preview_url}
+                  alt={`${project.company_name} preview`}
+                  className="h-full w-full object-cover object-top"
+                  loading="lazy"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-emerald-600 dark:text-emerald-400">
+                  Your Website
+                </p>
+                <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                  {project.deliverables.preview_url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                </p>
+              </div>
+              <a
+                href={project.deliverables.preview_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-emerald-500/15 px-4 py-2 text-sm font-medium text-emerald-600 transition-colors duration-200 hover:bg-emerald-500/25 dark:text-emerald-400"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Open
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* Delivery Timeline (B2 fix: single unified visualization) */}
         <Section label="Progress" title="Delivery Timeline">
           <ProjectDeliveryTimeline
@@ -531,6 +564,96 @@ export function ProjectDetail() {
                 </li>
               ))}
             </ul>
+          </Section>
+        )}
+
+        {/* Domain section for live projects */}
+        {project.status === "live" && (
+          <Section label="Infrastructure" title="Domain">
+            {(() => {
+              const hasCustomDomain = project.deliverables?.urls?.some(
+                (u) => u.url && !u.url.includes(".pages.dev")
+              );
+              const previewHost = project.deliverables?.preview_url
+                ? project.deliverables.preview_url.replace(/^https?:\/\//, "").replace(/\/.*$/, "")
+                : null;
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className={`h-2 w-2 rounded-full ${hasCustomDomain ? "bg-emerald-500" : "bg-amber-500"}`} />
+                    <span className="text-sm text-foreground">
+                      {hasCustomDomain ? "Custom domain connected" : "Using Kaizen subdomain"}
+                    </span>
+                  </div>
+                  {!hasCustomDomain && previewHost && (
+                    <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3">
+                      <p className="text-sm font-medium text-foreground">Connect your domain</p>
+                      <p className="text-xs leading-[1.6] text-muted-foreground">
+                        Point your domain to your Kaizen site by adding a CNAME record with your DNS provider:
+                      </p>
+                      <div className="overflow-x-auto rounded-md bg-muted/50 px-3 py-2">
+                        <code className="text-xs text-foreground/80">
+                          CNAME &rarr; {previewHost}
+                        </code>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Changes usually take effect within a few hours.{" "}
+                        <button
+                          onClick={() => {
+                            if (!token) return;
+                            api.sendMessage(token, "I'd like help connecting my custom domain to my website.").then(() => {
+                              toast.success("Message sent to Kaizen");
+                            }).catch(() => {
+                              toast.error("Failed to send message");
+                            });
+                          }}
+                          className="inline text-primary transition-colors duration-200 hover:text-primary/80"
+                        >
+                          Need help?
+                        </button>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </Section>
+        )}
+
+        {/* What's Next upsell for delivered projects */}
+        {project.status === "live" && (
+          <Section label="Opportunity" title="What&apos;s Next?">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Link
+                href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=redesign`}
+                className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
+              >
+                <p className="text-sm font-medium text-foreground">Order a refresh</p>
+                <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
+                  Evolve your site with updated design and content
+                </p>
+              </Link>
+              <Link
+                href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=add-features&description=${encodeURIComponent("Add blog/CMS to existing site")}`}
+                className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
+              >
+                <p className="text-sm font-medium text-foreground">Add a blog or CMS</p>
+                <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
+                  Manage your own content with a headless CMS
+                </p>
+              </Link>
+              {project.tier !== "premium" && (
+                <Link
+                  href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=redesign&tier=premium`}
+                  className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
+                >
+                  <p className="text-sm font-medium text-foreground">Upgrade your plan</p>
+                  <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
+                    Premium: custom animations, CMS, priority support
+                  </p>
+                </Link>
+              )}
+            </div>
           </Section>
         )}
       </div>

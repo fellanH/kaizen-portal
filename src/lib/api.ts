@@ -317,6 +317,20 @@ export const api = {
     return generateMockAnalytics(period);
   },
 
+  submitProject(data: {
+    company: string;
+    url?: string;
+    type: string;
+    tier: string;
+    description: string;
+    timeline: string;
+  }) {
+    return request<{ ok: boolean; token?: string }>("/submit", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
   setToken,
   clearToken,
   getToken,

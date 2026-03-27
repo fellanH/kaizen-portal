@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ExternalLink, Plus } from "lucide-react";
 import { type Project } from "@/lib/api";
 import { useProjects } from "@/lib/projects-context";
 
@@ -199,6 +200,11 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             >
               {project.company_name || "Untitled Project"}
             </h3>
+            {project.status === "live" && project.deliverables?.preview_url && (
+              <p className="truncate text-xs text-muted-foreground/60">
+                {project.deliverables.preview_url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+              </p>
+            )}
             <div className="flex items-center gap-2">
               <StatusBadge status={project.status} />
               <span className="text-xs text-muted-foreground/60">
@@ -215,11 +221,43 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <span className="text-xs text-muted-foreground">
               {project.created_at ? `Started ${formatDate(project.created_at)}` : ""}
             </span>
-            <span className="text-xs text-muted-foreground/60">
-              {days === 0 ? "Today" : `${days}d ago`}
-            </span>
+            {project.status === "live" && project.deliverables?.preview_url ? (
+              <a
+                href={project.deliverables.preview_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 transition-colors duration-200 hover:bg-emerald-500/20 dark:text-emerald-400"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Visit Site
+              </a>
+            ) : (
+              <span className="text-xs text-muted-foreground/60">
+                {days === 0 ? "Today" : `${days}d ago`}
+              </span>
+            )}
           </div>
         </div>
+      </article>
+    </Link>
+  );
+}
+
+/* ── New project CTA card ── */
+function NewProjectCard({ index }: { index: number }) {
+  return (
+    <Link
+      href="/projects/new"
+      className="project-card-enter group block"
+      style={{ animationDelay: `${index * 80}ms` }}
+    >
+      <article className="flex h-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border/60 bg-transparent px-6 py-16 text-center transition-all duration-400 hover:border-primary/40 hover:bg-primary/[0.03]">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted transition-colors duration-300 group-hover:bg-primary/10">
+          <Plus className="h-5 w-5 text-muted-foreground transition-colors duration-300 group-hover:text-primary" />
+        </div>
+        <p className="text-sm font-medium text-foreground/80">Start a new project</p>
+        <p className="mt-1 text-xs text-muted-foreground/60">Tell us what you need</p>
       </article>
     </Link>
   );
@@ -323,6 +361,7 @@ export default function ProjectsPage() {
             {projects.map((project, i) => (
               <ProjectCard key={project.token} project={project} index={i} />
             ))}
+            <NewProjectCard index={projects.length} />
           </div>
         )}
       </div>
