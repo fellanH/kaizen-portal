@@ -15,6 +15,7 @@ import { ProjectCmsOnboarding } from "@/components/project-cms-onboarding";
 import { ProjectPrimaryAction } from "@/components/project-primary-action";
 import { ProjectStageIndicator } from "@/components/project-stage-indicator";
 import { ProjectLaunchFlow } from "@/components/project-launch-flow";
+import { ProjectDomainCheck } from "@/components/project-domain-check";
 
 /* ── Status config with semantic colors ── */
 const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
@@ -509,18 +510,20 @@ export function ProjectDetail() {
                     </span>
                   </div>
                   {!hasCustomDomain && previewHost && (
-                    <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3">
-                      <p className="text-sm font-medium text-foreground">Connect your domain</p>
-                      <p className="text-xs leading-[1.6] text-muted-foreground">
-                        Point your domain to your Kaizen site by adding a CNAME record with your DNS provider:
-                      </p>
-                      <div className="overflow-x-auto rounded-md bg-muted/50 px-3 py-2">
-                        <code className="text-xs text-foreground/80">
-                          CNAME &rarr; {previewHost}
-                        </code>
+                    <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-foreground">Connect your domain</p>
+                        <p className="text-xs leading-[1.6] text-muted-foreground">
+                          Add a CNAME record with your DNS provider pointing to:
+                        </p>
+                        <div className="overflow-x-auto rounded-md bg-muted/50 px-3 py-2">
+                          <code className="text-xs text-foreground/80">
+                            CNAME &rarr; {previewHost}
+                          </code>
+                        </div>
                       </div>
+                      <ProjectDomainCheck targetHost={previewHost} projectToken={token} />
                       <p className="text-xs text-muted-foreground">
-                        Changes usually take effect within a few hours.{" "}
                         <button
                           onClick={() => {
                             if (!token) return;
