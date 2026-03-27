@@ -7,7 +7,6 @@ export function ProjectContractViewer({ token }: { token: string }) {
   const [data, setData] = useState<ContractResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [accepting, setAccepting] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
@@ -20,17 +19,6 @@ export function ProjectContractViewer({ token }: { token: string }) {
       })
       .finally(() => setLoading(false));
   }, [token]);
-
-  async function handleAccept() {
-    setAccepting(true);
-    try {
-      await api.approve(token, "accept_contract");
-      const updated = await api.getContract(token);
-      setData(updated);
-    } finally {
-      setAccepting(false);
-    }
-  }
 
   function escapeHtml(str: string): string {
     return str
@@ -66,7 +54,7 @@ export function ProjectContractViewer({ token }: { token: string }) {
           <p>${company} | ${tier} tier | ${createdAt}</p>
         </div>
         ${sectionsHtml}
-        ${data.accepted ? `<div class="accepted">Contract accepted on ${new Date(data.accepted_at!).toLocaleDateString()}</div>` : ""}
+        ${data.accepted ? `<div class="accepted">Agreement signed on ${new Date(data.accepted_at!).toLocaleDateString()}</div>` : ""}
       </body></html>
     `);
     printWindow.document.close();
@@ -82,33 +70,27 @@ export function ProjectContractViewer({ token }: { token: string }) {
     );
   }
 
-  if (error) return null;
-
-  if (!data) return null;
+  if (error || !data) return null;
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-              data.accepted
-                ? "status-emerald"
-                : "status-neutral"
-            }`}
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${data.accepted ? "bg-emerald-500" : "bg-muted-foreground/60"}`} />
-            {data.accepted ? "Accepted" : "Pending"}
-          </span>
-          {data.accepted && data.accepted_at && (
-            <span className="text-xs text-muted-foreground">
-              {new Date(data.accepted_at).toLocaleDateString()}
+          {data.accepted ? (
+            <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+              <svg className="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Agreement signed on {new Date(data.accepted_at!).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+            </span>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              Contract pending
             </span>
           )}
         </div>
         <div className="flex items-center gap-3">
-          {/* B4 fix: only show Download PDF for accepted contracts */}
           {data.accepted && (
             <button
               onClick={handlePrint}
@@ -157,27 +139,12 @@ export function ProjectContractViewer({ token }: { token: string }) {
             </div>
           ))}
 
-          {/* Accept button */}
+          {/* Contact note for unaccepted contracts (legacy projects) */}
           {!data.accepted && (
             <div className="border-t border-border/60 pt-5">
-              <p className="mb-4 text-xs text-muted-foreground">
-                By clicking below, you agree to the terms outlined above.
+              <p className="text-xs text-muted-foreground">
+                Contact us to finalize your agreement.
               </p>
-              <button
-                onClick={handleAccept}
-                disabled={accepting}
-                className="group inline-flex items-center gap-2 text-sm text-foreground transition-all duration-200 disabled:opacity-30"
-              >
-                <span className="relative">
-                  {accepting ? "Accepting..." : "I Accept"}
-                  <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary" />
-                </span>
-                {!accepting && (
-                  <svg className="h-3.5 w-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </button>
             </div>
           )}
         </div>

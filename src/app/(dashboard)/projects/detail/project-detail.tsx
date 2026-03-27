@@ -629,10 +629,12 @@ export function ProjectDetail() {
           </Section>
         )}
 
-        {/* 10. Contract -- ALL statuses */}
-        <Section label="Legal" title="Contract">
-          <ProjectContractViewer token={token} />
-        </Section>
+        {/* 10. Contract -- live only */}
+        {s === "live" && (
+          <Section label="Legal" title="Contract">
+            <ProjectContractViewer token={token} />
+          </Section>
+        )}
 
         {/* 11. Activity -- ALL statuses */}
         <Section label="History" title="Activity">
