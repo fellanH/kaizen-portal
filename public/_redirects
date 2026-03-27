@@ -1,3 +1,7 @@
-# Redirect /projects/:token to /projects/detail?token=:token
-# Handles email links that use /projects/TOKEN format
+# Pass through real portal routes (first match wins)
+/projects/detail /projects/detail 200
+/projects/detail?* /projects/detail 200
+/projects/new /projects/new 200
+
+# Redirect token-based URLs from emails to project detail
 /projects/:token /projects/detail?token=:token 302
