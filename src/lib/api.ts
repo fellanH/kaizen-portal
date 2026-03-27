@@ -377,6 +377,8 @@ export const api = {
 
   submitProject(data: {
     company: string;
+    name: string;
+    email: string;
     url?: string;
     type: string;
     tier: string;

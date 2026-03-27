@@ -1,0 +1,3 @@
+# Redirect /projects/:token to /projects/detail?token=:token
+# Handles email links that use /projects/TOKEN format
+/projects/:token /projects/detail?token=:token 302

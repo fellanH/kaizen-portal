@@ -93,6 +93,8 @@ export default function NewProjectPage() {
     try {
       await api.submitProject({
         company: company.trim(),
+        name: `${company.trim()} - ${selectedTier.label}`,
+        email: email || "",
         url: url.trim() || undefined,
         type,
         tier,
