@@ -24,6 +24,7 @@ const statusConfig: Record<string, { label: string; className: string; dot: stri
   intake_received: { label: "Received", className: "status-neutral", dot: "bg-muted-foreground/60" },
   spec_writing: { label: "Scoping", className: "status-amber", dot: "bg-amber-500" },
   building: { label: "Building", className: "status-blue", dot: "bg-blue-500" },
+  pending_review: { label: "Under Review", className: "status-blue", dot: "bg-blue-500" },
   review_ready: { label: "Review Ready", className: "status-orange", dot: "bg-primary" },
   approved: { label: "Approved", className: "status-emerald", dot: "bg-emerald-500" },
   revising: { label: "Revising", className: "status-amber", dot: "bg-amber-500" },
@@ -331,6 +332,14 @@ export function ProjectDetail() {
       document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [fetchProject, token]);
+
+  // Set document title to company name instead of showing the hash token
+  useEffect(() => {
+    if (project?.company_name) {
+      document.title = `${project.company_name} | Kaizen`;
+    }
+    return () => { document.title = "Kaizen"; };
+  }, [project?.company_name]);
 
   useEffect(() => {
     if (project?.status === "live" && token) {

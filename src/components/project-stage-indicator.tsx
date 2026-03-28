@@ -1,9 +1,9 @@
 const STAGES = [
-  { key: "intake_received", label: "Received" },
-  { key: "spec_writing", label: "Scoping" },
-  { key: "building", label: "Building" },
-  { key: "review_ready", label: "Review" },
-  { key: "live", label: "Delivered" },
+  { key: "intake_received", label: "Received", subtitle: "Project received" },
+  { key: "spec_writing", label: "Scoping", subtitle: "Analyzing your website and writing specification (~5 min)" },
+  { key: "building", label: "Building", subtitle: "Generating your new website (~2 min)" },
+  { key: "review_ready", label: "Review", subtitle: "Preview ready for your feedback" },
+  { key: "live", label: "Delivered", subtitle: "Website is live" },
 ] as const;
 
 const stageColors: Record<string, string> = {
@@ -54,6 +54,11 @@ export function ProjectStageIndicator({ status }: { status: string }) {
               >
                 {stage.label}
               </span>
+              {isCurrent && (
+                <span className="mt-0.5 max-w-[80px] text-center text-[8px] leading-tight text-muted-foreground/70 sm:max-w-[100px]">
+                  {stage.subtitle}
+                </span>
+              )}
             </div>
           </div>
         );

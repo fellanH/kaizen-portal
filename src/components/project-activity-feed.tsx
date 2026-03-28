@@ -20,6 +20,29 @@ const ACTOR_LABELS: Record<string, string> = {
   system: "System",
 };
 
+/* Map internal "Status changed from X to Y" to client-friendly messages */
+const STATUS_TRANSITION_MESSAGES: Record<string, string> = {
+  "intake_received->spec_writing": "We are reviewing your project",
+  "spec_writing->spec_ready": "Your project specification is ready",
+  "spec_ready->building": "Building your website",
+  "building->pending_review": "Your preview is ready for our review",
+  "pending_review->review_ready": "Your website preview is ready for your review",
+  "review_ready->approved": "You approved the preview",
+  "approved->live": "Your website is live",
+};
+
+function friendlyDescription(description: string): string {
+  // Match "Status changed from X to Y" pattern
+  const match = description.match(/^Status changed from (\S+) to (\S+)$/i);
+  if (match) {
+    const key = `${match[1]}->${match[2]}`;
+    if (STATUS_TRANSITION_MESSAGES[key]) return STATUS_TRANSITION_MESSAGES[key];
+    // Any -> revising
+    if (match[2] === "revising") return "Revisions in progress";
+  }
+  return description;
+}
+
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (seconds < 60) return "just now";
@@ -111,7 +134,7 @@ export function ProjectActivityFeed({ token, createdAt }: { token: string; creat
 
             {/* Content */}
             <div className="min-w-0 flex-1">
-              <p className="text-sm leading-snug">{event.description}</p>
+              <p className="text-sm leading-snug">{friendlyDescription(event.description)}</p>
               <p className="mt-0.5 text-[10px] text-muted-foreground">
                 {ACTOR_LABELS[event.actor] || event.actor} · {timeAgo(event.at)}
               </p>

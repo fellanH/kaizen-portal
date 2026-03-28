@@ -39,6 +39,11 @@ const cardStyle: Record<
     border: "border-blue-500/20",
     bg: "bg-blue-500/[0.04]",
   },
+  pending_review: {
+    accent: "border-l-blue-500",
+    border: "border-blue-500/20",
+    bg: "bg-blue-500/[0.04]",
+  },
   review_ready: {
     accent: "border-l-primary",
     border: "border-primary/20",
@@ -76,33 +81,32 @@ function getCardContent(project: Project): { heading: string; body: string } {
       if (website) {
         return {
           heading: `We're analyzing ${website}`,
-          body: "Your project specification will be ready soon.",
+          body: "We are analyzing your website. Your specification will be ready in about 5 minutes.",
         };
       }
       return {
         heading: "We've received your request",
-        body: "Your project is being reviewed. We'll start scoping within 24 hours.",
+        body: "We are analyzing your website. Your specification will be ready in about 5 minutes.",
       };
     case "spec_writing":
       return {
         heading: "Your project is being scoped",
-        body: "We're writing the specification for your site. You'll be able to review it soon.",
+        body: "We are analyzing your website. Your specification will be ready in about 5 minutes.",
       };
     case "building":
-      if (previewUrl) {
-        return {
-          heading: "Your site is being built",
-          body: "Development is underway based on your approved specification.",
-        };
-      }
       return {
         heading: "Your site is being built",
-        body: "Development is underway based on your approved specification. We'll notify you when the preview is ready.",
+        body: "We are building your new website. This typically takes 2-3 minutes.",
+      };
+    case "pending_review":
+      return {
+        heading: "Preview under review",
+        body: "Your preview is being reviewed by our team. You will be notified when it is ready.",
       };
     case "review_ready":
       return {
         heading: "Your site is ready for review",
-        body: "Review the preview below and let us know if it's what you had in mind.",
+        body: "Your website preview is ready! Review it below and let us know what you think.",
       };
     case "approved":
       return {
