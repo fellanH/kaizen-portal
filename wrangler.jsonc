@@ -10,6 +10,9 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "vars": {
+    "ADMIN_API_KEY": ""
+  },
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
