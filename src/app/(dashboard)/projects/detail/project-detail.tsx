@@ -254,7 +254,7 @@ function DetailSkeleton() {
 }
 
 /* ── Types ── */
-type Status = "intake_received" | "spec_writing" | "spec_ready" | "building" | "pending_review" | "review_ready" | "approved" | "revising" | "live";
+type Status = "intake_received" | "spec_writing" | "spec_ready" | "building" | "pending_review" | "review_ready" | "approved" | "revising" | "live" | "failed";
 
 /* ── Main Component ── */
 export function ProjectDetail({ token }: { token: string }) {

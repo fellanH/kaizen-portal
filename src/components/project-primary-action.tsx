@@ -90,7 +90,7 @@ function getCardContent(project: Project): { heading: string; body: string } {
     case "pending_review":
       return {
         heading: "Preview under review",
-        body: "Your preview is being reviewed by our team. You will be notified when it is ready.",
+        body: "Your preview is being analyzed automatically. You will be notified when it is ready.",
       };
     case "review_ready":
       return {
@@ -112,7 +112,7 @@ function getCardContent(project: Project): { heading: string; body: string } {
     default:
       return {
         heading: "We've received your request",
-        body: "Your project is being reviewed. We'll start scoping within 24 hours.",
+        body: "Your project is being analyzed automatically. Your specification will be ready shortly.",
       };
   }
 }

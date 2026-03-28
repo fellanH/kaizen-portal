@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import Link from "next/link";
+import { AdminProjectActions } from "@/components/admin-project-actions";
 
 const API_BASE = "https://kaizen-intake-api.fehellstrom.workers.dev";
 
@@ -35,15 +35,15 @@ async function fetchProjects(): Promise<AdminProject[]> {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  new: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  speccing: "bg-violet-500/15 text-violet-400 border-violet-500/20",
+  intake_received: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+  spec_writing: "bg-violet-500/15 text-violet-400 border-violet-500/20",
   spec_review: "bg-amber-500/15 text-amber-400 border-amber-500/20",
   approved: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
   building: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
-  preview: "bg-orange-500/15 text-orange-400 border-orange-500/20",
+  review_ready: "bg-orange-500/15 text-orange-400 border-orange-500/20",
+  revising: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
   live: "bg-green-500/15 text-green-400 border-green-500/20",
   failed: "bg-red-500/15 text-red-400 border-red-500/20",
-  revision: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
 };
 
 function statusBadge(status: string) {
@@ -80,7 +80,7 @@ export default async function AdminPage() {
   const healthCards = [
     { label: "Total", value: projects.length, color: "text-foreground" },
     { label: "Building", value: counts["building"] ?? 0, color: "text-cyan-400" },
-    { label: "Pending Review", value: (counts["preview"] ?? 0) + (counts["spec_review"] ?? 0), color: "text-amber-400" },
+    { label: "Pending Review", value: (counts["review_ready"] ?? 0) + (counts["spec_review"] ?? 0), color: "text-amber-400" },
     { label: "Live", value: counts["live"] ?? 0, color: "text-green-400" },
     { label: "Failed", value: counts["failed"] ?? 0, color: "text-red-400" },
   ];
@@ -129,18 +129,11 @@ export default async function AdminPage() {
                   <td className="px-4 py-3 text-foreground/60 capitalize">{p.tier}</td>
                   <td className="px-4 py-3 text-foreground/40">{formatDate(p.created_at)}</td>
                   <td className="px-4 py-3">
-                    {p.deliverables?.preview_url ? (
-                      <Link
-                        href={p.deliverables.preview_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline text-xs"
-                      >
-                        Preview
-                      </Link>
-                    ) : (
-                      <span className="text-foreground/20 text-xs">No preview</span>
-                    )}
+                    <AdminProjectActions
+                      token={p.token}
+                      status={p.status}
+                      previewUrl={p.deliverables?.preview_url}
+                    />
                   </td>
                 </tr>
               ))}
