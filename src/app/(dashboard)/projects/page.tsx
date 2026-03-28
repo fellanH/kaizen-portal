@@ -5,6 +5,10 @@ import { ExternalLink, Plus, PlusCircle } from "lucide-react";
 import { type Project } from "@/lib/api";
 import { useProjects } from "@/lib/projects-context";
 import { slugify } from "@/lib/slugify";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /* ── Pipeline stages in logical order ── */
 const PIPELINE_STAGES = [
@@ -22,43 +26,43 @@ const statusConfig: Record<
 > = {
   intake_received: {
     label: "Received",
-    bg: "bg-muted",
+    bg: "status-neutral",
     text: "text-muted-foreground",
     dot: "bg-muted-foreground/60",
   },
   spec_writing: {
     label: "Scoping",
-    bg: "bg-amber-500/15",
+    bg: "status-amber",
     text: "text-amber-600 dark:text-amber-400",
     dot: "bg-amber-500",
   },
   building: {
     label: "Building",
-    bg: "bg-blue-500/15",
+    bg: "status-blue",
     text: "text-blue-600 dark:text-blue-400",
     dot: "bg-blue-500",
   },
   review_ready: {
     label: "Review Ready",
-    bg: "bg-primary/15",
+    bg: "status-orange",
     text: "text-primary",
     dot: "bg-primary",
   },
   approved: {
     label: "Approved",
-    bg: "bg-emerald-500/15",
+    bg: "status-emerald",
     text: "text-emerald-600 dark:text-emerald-400",
     dot: "bg-emerald-500",
   },
   revising: {
     label: "Revising",
-    bg: "bg-amber-500/15",
+    bg: "status-amber",
     text: "text-amber-600 dark:text-amber-400",
     dot: "bg-amber-500",
   },
   live: {
     label: "Delivered",
-    bg: "bg-emerald-500/15",
+    bg: "status-emerald",
     text: "text-emerald-600 dark:text-emerald-400",
     dot: "bg-emerald-500",
   },
@@ -97,7 +101,7 @@ function ProjectThumbnail({ project }: { project: Project }) {
 
   if (imageUrl && imageUrl !== "undefined") {
     return (
-      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-muted">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
         <img
           src={imageUrl}
           alt={`${project.company_name || "Project"} preview`}
@@ -105,12 +109,11 @@ function ProjectThumbnail({ project }: { project: Project }) {
           style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
           loading="lazy"
         />
-        <div className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-foreground/5" />
+        <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-foreground/5" />
       </div>
     );
   }
 
-  /* Styled placeholder: abstract gradient mesh */
   const name = project.company_name || "Project";
   const hue =
     name
@@ -118,7 +121,7 @@ function ProjectThumbnail({ project }: { project: Project }) {
       .reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
 
   return (
-    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-muted">
+    <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
       <div
         className="absolute inset-0 opacity-30"
         style={{
@@ -137,7 +140,7 @@ function ProjectThumbnail({ project }: { project: Project }) {
             .slice(0, 3)}
         </span>
       </div>
-      <div className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-foreground/5" />
+      <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-foreground/5" />
     </div>
   );
 }
@@ -167,20 +170,18 @@ function PipelineProgress({ status }: { status: string }) {
   );
 }
 
-/* ── Status badge ── */
+/* ── Status badge using shadcn Badge ── */
 function StatusBadge({ status }: { status: string }) {
   const cfg = statusConfig[status] || statusConfig.intake_received;
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.bg} ${cfg.text}`}
-    >
+    <Badge variant="outline" className={`gap-1.5 border-0 ${cfg.bg}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
       {cfg.label}
-    </span>
+    </Badge>
   );
 }
 
-/* ── Project card ── */
+/* ── Project card using shadcn Card ── */
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const days = project.created_at ? daysSince(project.created_at) : 0;
 
@@ -190,7 +191,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       className="project-card-enter group block"
       style={{ animationDelay: `${index * 80}ms` }}
     >
-      <article className="overflow-hidden rounded-xl border border-border bg-card transition-all duration-400 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_8px_30px_-12px] hover:shadow-primary/10">
+      <Card className="overflow-hidden border-border bg-card py-0 transition-all duration-400 hover:-translate-y-0.5 hover:ring-primary/30 hover:shadow-[0_8px_30px_-12px] hover:shadow-primary/10">
         {/* Thumbnail */}
         <div className="overflow-hidden">
           <div
@@ -204,8 +205,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         </div>
 
         {/* Content */}
-        <div className="space-y-4 p-5">
-          {/* Company name: most prominent element */}
+        <CardContent className="space-y-4 px-5 py-5">
           <div className="space-y-1.5">
             <h3
               className="text-lg font-medium leading-tight tracking-tight text-foreground"
@@ -226,11 +226,11 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             </div>
           </div>
 
-          {/* Pipeline progress */}
           <PipelineProgress status={project.status} />
 
-          {/* Meta row */}
-          <div className="flex items-center justify-between border-t border-border/50 pt-3">
+          <Separator className="opacity-50" />
+
+          <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
               {project.created_at ? `Started ${formatDate(project.created_at)}` : ""}
             </span>
@@ -251,8 +251,8 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               </span>
             )}
           </div>
-        </div>
-      </article>
+        </CardContent>
+      </Card>
     </Link>
   );
 }
@@ -265,18 +265,18 @@ function NewProjectCard({ index }: { index: number }) {
       className="project-card-enter group block"
       style={{ animationDelay: `${index * 80}ms` }}
     >
-      <article className="flex h-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border/60 bg-transparent px-6 py-16 text-center transition-all duration-400 hover:border-primary/40 hover:bg-primary/[0.03]">
+      <Card className="flex h-full flex-col items-center justify-center border-2 border-dashed border-border/60 bg-transparent px-6 py-16 text-center ring-0 transition-all duration-400 hover:border-primary/40 hover:bg-primary/[0.03]">
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted transition-colors duration-300 group-hover:bg-primary/10">
           <Plus className="h-5 w-5 text-muted-foreground transition-colors duration-300 group-hover:text-primary" />
         </div>
         <p className="text-sm font-medium text-foreground/80">Start a new project</p>
         <p className="mt-1 text-xs text-muted-foreground/60">Tell us what you need</p>
-      </article>
+      </Card>
     </Link>
   );
 }
 
-/* ── Page header with decorative line ── */
+/* ── Page header ── */
 function PageHeader({ count }: { count: number }) {
   return (
     <div className="kaizen-enter-1 space-y-4">
@@ -310,26 +310,26 @@ function PageHeader({ count }: { count: number }) {
           </Link>
         </div>
       </div>
-      <div className="kaizen-line h-px bg-border" />
+      <Separator />
     </div>
   );
 }
 
-/* ── Loading skeleton ── */
+/* ── Loading skeleton using shadcn Skeleton ── */
 function ProjectSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="aspect-[16/10] w-full skeleton-shimmer" />
-      <div className="space-y-3 p-5">
-        <div className="h-5 w-3/4 rounded skeleton-shimmer" />
-        <div className="h-4 w-1/3 rounded skeleton-shimmer" />
-        <div className="h-1 w-full rounded-full skeleton-shimmer" />
+    <Card className="overflow-hidden py-0">
+      <Skeleton className="aspect-[16/10] w-full rounded-none" />
+      <CardContent className="space-y-3 px-5 py-5">
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-1 w-full rounded-full" />
         <div className="flex justify-between pt-2">
-          <div className="h-3 w-24 rounded skeleton-shimmer" />
-          <div className="h-3 w-12 rounded skeleton-shimmer" />
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-12" />
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, type Project, type Message } from "@/lib/api";
-import { ExternalLink, ChevronDown } from "lucide-react";
+import { ExternalLink, ChevronDown, Monitor, Tablet, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectSpecReader } from "@/components/project-spec-reader";
 import { ProjectContractViewer } from "@/components/project-contract-viewer";
@@ -17,6 +17,11 @@ import { ProjectLaunchFlow } from "@/components/project-launch-flow";
 import { ProjectDomainCheck } from "@/components/project-domain-check";
 import { ProjectAnalyticsSummary } from "@/components/project-analytics-summary";
 import { ProjectContentEditor } from "@/components/project-content-editor";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /* ── Status config with semantic colors ── */
 const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
@@ -83,10 +88,10 @@ function MessageThread({
 
   return (
     <div className="space-y-4">
-      <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+      <div className="max-h-[480px] space-y-3 overflow-y-auto pr-1">
         {consolidated.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            No messages yet.
+            No messages yet. Start a conversation with the Kaizen team.
           </p>
         ) : (
           consolidated.map((msg, i) => (
@@ -120,7 +125,8 @@ function MessageThread({
           ))
         )}
       </div>
-      <div className="flex gap-3 border-t border-border/60 pt-4">
+      <Separator />
+      <div className="flex gap-3 pt-1">
         <input
           type="text"
           placeholder="Type a message..."
@@ -153,32 +159,32 @@ function MessageThread({
   );
 }
 
-/* ── Preview Frame ── */
-function PreviewFrame({ url, tall }: { url: string; tall?: boolean }) {
+/* ── Preview Frame with viewport switcher ── */
+function PreviewFrame({ url }: { url: string }) {
   const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">("desktop");
   const widths = { mobile: 375, tablet: 768, desktop: 1280 };
+  const icons = { mobile: Smartphone, tablet: Tablet, desktop: Monitor };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        {(["mobile", "tablet", "desktop"] as const).map((v) => (
-          <button
-            key={v}
-            onClick={() => setViewport(v)}
-            className={`text-xs transition-colors duration-200 ${
-              viewport === v
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <span className="relative">
+      <div className="flex items-center gap-1">
+        {(["desktop", "tablet", "mobile"] as const).map((v) => {
+          const Icon = icons[v];
+          return (
+            <button
+              key={v}
+              onClick={() => setViewport(v)}
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors duration-200 ${
+                viewport === v
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
               {v.charAt(0).toUpperCase() + v.slice(1)}
-              {viewport === v && (
-                <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary" />
-              )}
-            </span>
-          </button>
-        ))}
+            </button>
+          );
+        })}
         <a
           href={url}
           target="_blank"
@@ -186,47 +192,18 @@ function PreviewFrame({ url, tall }: { url: string; tall?: boolean }) {
           className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground"
         >
           <ExternalLink className="h-3 w-3" />
-          Open
+          Open in new tab
         </a>
       </div>
-      <div className="flex justify-center overflow-hidden rounded-lg border border-border/60 bg-muted/30">
+      <div className="flex justify-center overflow-hidden rounded-lg border border-border/60 bg-muted/20">
         <iframe
           src={url}
-          className={tall ? "h-[800px] border-0" : "h-[600px] border-0"}
+          className="h-[700px] border-0"
           style={{ width: widths[viewport] }}
           title="Preview"
           sandbox="allow-scripts allow-same-origin"
         />
       </div>
-    </div>
-  );
-}
-
-/* ── Section wrapper ── */
-function Section({
-  id,
-  label,
-  title,
-  children,
-}: {
-  id?: string;
-  label?: string;
-  title?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div id={id} className="ds-section">
-      <div className="ds-rule mb-6" />
-      {label && (
-        <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-          {label}
-        </p>
-      )}
-      {title && (
-        <h2 className="mt-1 mb-5 text-lg font-light tracking-[-0.02em]">{title}</h2>
-      )}
-      {!title && label && <div className="mb-5" />}
-      {children}
     </div>
   );
 }
@@ -248,11 +225,10 @@ function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div id={id} className="ds-section">
-      <div className="ds-rule mb-6" />
+    <Card id={id}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between text-left"
+        className="flex w-full items-center justify-between px-5 pt-4 pb-2 text-left"
       >
         <div>
           {label && (
@@ -261,7 +237,7 @@ function CollapsibleSection({
             </p>
           )}
           {title && (
-            <h2 className="mt-1 text-lg font-light tracking-[-0.02em]">{title}</h2>
+            <h2 className="mt-0.5 text-base font-light tracking-[-0.02em]">{title}</h2>
           )}
         </div>
         <ChevronDown
@@ -270,29 +246,24 @@ function CollapsibleSection({
           }`}
         />
       </button>
-      {open && <div className="mt-5">{children}</div>}
-    </div>
+      {open && <CardContent className="px-5 pb-5">{children}</CardContent>}
+    </Card>
   );
 }
 
 /* ── Loading skeleton ── */
 function DetailSkeleton() {
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8 sm:py-14">
+    <div className="mx-auto max-w-4xl px-6 py-10 sm:px-8 sm:py-14">
       <div className="space-y-3">
-        <div className="h-3 w-20 ds-skeleton" />
-        <div className="h-10 w-2/3 ds-skeleton" />
-        <div className="h-px w-full ds-skeleton" />
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-10 w-2/3" />
+        <Skeleton className="h-5 w-1/3" />
       </div>
-      <div className="mt-12 space-y-10">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="space-y-3">
-            <div className="h-px w-full ds-skeleton" />
-            <div className="h-3 w-16 ds-skeleton" />
-            <div className="h-5 w-1/3 ds-skeleton" />
-            <div className="h-24 w-full ds-skeleton" />
-          </div>
-        ))}
+      <Separator className="mt-6" />
+      <div className="mt-8 space-y-4">
+        <Skeleton className="h-10 w-80" />
+        <Skeleton className="h-[500px] w-full rounded-lg" />
       </div>
     </div>
   );
@@ -314,15 +285,16 @@ function showSpec(s: Status, hasContent: boolean) {
 }
 function showDomain(s: Status) { return s === "live"; }
 function showCms(s: Status, hasUrl: boolean) { return s === "live" && hasUrl; }
-function showUpsell(s: Status) { return s === "live"; }
-function showDeliverables(s: Status, hasUrls: boolean) { return s === "live" && hasUrls; }
+function showEditor(s: Status, hasPreview: boolean) {
+  return hasPreview && (s === "review_ready" || s === "pending_review" || s === "building");
+}
 
 /* ── Main Component ── */
 export function ProjectDetail({ token: tokenProp }: { token?: string } = {}) {
   const searchParams = useSearchParams();
   const [hashToken, setHashToken] = useState<string | null>(null);
   useEffect(() => {
-    if (tokenProp) return; // skip hash extraction when token provided via prop
+    if (tokenProp) return;
     const hash = window.location.hash.slice(1).split('#')[0];
     if (hash) setHashToken(hash);
   }, [tokenProp]);
@@ -330,7 +302,7 @@ export function ProjectDetail({ token: tokenProp }: { token?: string } = {}) {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [launchDismissed, setLaunchDismissed] = useState(true); // default true to avoid flash
+  const [launchDismissed, setLaunchDismissed] = useState(true);
 
   const fetchProject = useCallback(() => {
     if (!token) return;
@@ -374,7 +346,6 @@ export function ProjectDetail({ token: tokenProp }: { token?: string } = {}) {
     };
   }, [fetchProject, token]);
 
-  // Set document title to company name instead of showing the hash token
   useEffect(() => {
     if (project?.company_name) {
       document.title = `${project.company_name} | Kaizen`;
@@ -436,7 +407,7 @@ export function ProjectDetail({ token: tokenProp }: { token?: string } = {}) {
     );
   }
 
-  // Launch flow for freshly-live projects (first visit after approval)
+  // Launch flow for freshly-live projects
   if (project.status === "live" && !launchDismissed) {
     return (
       <ProjectLaunchFlow
@@ -457,10 +428,15 @@ export function ProjectDetail({ token: tokenProp }: { token?: string } = {}) {
   const hasSpecContent = !!project.spec_content;
   const hasSanityUrl = !!project.deliverables?.sanity_studio_url;
   const hasDeliverableUrls = !!project.deliverables?.urls && project.deliverables.urls.length > 0;
+  const messageCount = (project.messages || []).length;
+
+  // Determine default tab: Preview if available, otherwise Messages
+  const hasEditorTab = showEditor(s, hasPreviewUrl);
+  const defaultTab = hasPreviewUrl ? "preview" : "messages";
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8 sm:py-14">
-      {/* ── Page header ── */}
+    <div className="mx-auto max-w-4xl px-6 py-10 sm:px-8 sm:py-14">
+      {/* ── Page header (always visible above tabs) ── */}
       <div className="kaizen-enter-1">
         <nav className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
           <Link
@@ -473,242 +449,353 @@ export function ProjectDetail({ token: tokenProp }: { token?: string } = {}) {
           <span className="text-foreground">{project.company_name}</span>
         </nav>
 
-        <p
-          className="text-[0.6rem] font-medium uppercase text-muted-foreground/60"
-          style={{ letterSpacing: "0.08em" }}
-        >
-          Project
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1
+              className="text-[clamp(1.75rem,1.14vw+1.5rem,2.5rem)] font-light tracking-tight text-foreground"
+              style={{ letterSpacing: "-0.03em", lineHeight: "1.1" }}
+            >
+              {project.company_name}
+            </h1>
 
-        <h1
-          className="mt-1 text-[clamp(1.75rem,1.14vw+1.5rem,2.5rem)] font-light tracking-tight text-foreground"
-          style={{ letterSpacing: "-0.03em", lineHeight: "1.1" }}
-        >
-          {project.company_name}
-        </h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className={`gap-1.5 border-0 ${cfg.className}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+                {cfg.label}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {tierLabels[project.tier] || project.tier}
+              </span>
+              <span className="text-xs text-muted-foreground/40">&middot;</span>
+              <span className="text-xs text-muted-foreground">
+                Started {new Date(project.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+            </div>
+          </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.className}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-            {cfg.label}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {tierLabels[project.tier] || project.tier}
-          </span>
-          <span className="text-xs text-muted-foreground/40">&middot;</span>
-          <span className="text-xs text-muted-foreground">
-            Started {new Date(project.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-          </span>
+          {/* Stage indicator compact */}
+          <div className="hidden sm:block">
+            <ProjectStageIndicator status={project.status} />
+          </div>
         </div>
 
-        <div className="kaizen-enter-fade mt-6 h-px w-full overflow-hidden">
-          <div className="kaizen-line h-full bg-border" />
+        {/* Primary action card */}
+        <div className="mt-6">
+          <ProjectPrimaryAction
+            project={project}
+            token={token}
+            onApprove={handleApprove}
+            onRevise={handleRevision}
+            actionLoading={actionLoading}
+          />
         </div>
+
+        <Separator className="mt-6" />
       </div>
 
-      {/* ── Content sections (stage-aware order) ── */}
-      <div className="mt-10 space-y-10">
+      {/* ── Mobile stage indicator ── */}
+      <div className="mt-4 flex justify-center sm:hidden">
+        <ProjectStageIndicator status={project.status} />
+      </div>
 
-        {/* A. Primary Action Card */}
-        <ProjectPrimaryAction
-          project={project}
-          token={token}
-          onApprove={handleApprove}
-          onRevise={handleRevision}
-          actionLoading={actionLoading}
-        />
+      {/* ── Tabbed content ── */}
+      <div className="mt-6">
+        <Tabs defaultValue={defaultTab}>
+          <TabsList variant="line" className="w-full justify-start gap-0">
+            {hasPreviewUrl && (
+              <TabsTrigger value="preview" className="text-sm font-light">
+                Preview
+              </TabsTrigger>
+            )}
+            {hasEditorTab && (
+              <TabsTrigger value="editor" className="text-sm font-light">
+                Editor
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="messages" className="text-sm font-light">
+              Messages
+              {messageCount > 0 && (
+                <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/10 px-1 text-[0.6rem] font-medium text-primary">
+                  {messageCount}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="text-sm font-light">
+              Activity
+            </TabsTrigger>
+          </TabsList>
 
-        {/* B. Preview (THE PRODUCT, most prominent when available) */}
-        {showPreview(hasPreviewUrl) && (
-          <Section id="preview" label="Deliverable" title={s === "live" ? "Your Website" : "Preview"}>
-            <PreviewFrame url={previewUrl!} tall />
-          </Section>
-        )}
+          {/* Preview tab */}
+          {hasPreviewUrl && (
+            <TabsContent value="preview" className="mt-6">
+              <div className="space-y-8">
+                <PreviewFrame url={previewUrl!} />
 
-        {/* C. Content Editor (below preview when available) */}
-        {previewUrl && (s === "review_ready" || s === "pending_review" || s === "building") && (
-          <Section label="Content" title="Edit Content">
-            <ProjectContentEditor
-              slug={project.company_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}
-              token={token}
-            />
-          </Section>
-        )}
-
-        {/* D. Before / After */}
-        {showBeforeAfter(s, hasOriginalScreenshot, hasPreviewUrl) && (
-          <Section label="Comparison" title="Before / After">
-            <ProjectBeforeAfter
-              originalUrl={project.original_screenshot_url!}
-              previewUrl={project.deliverables!.preview_url!}
-            />
-          </Section>
-        )}
-
-        {/* E. Progress Timeline (compact, always visible) */}
-        <div className="flex justify-center">
-          <ProjectStageIndicator status={project.status} />
-        </div>
-
-        {/* F. Specification */}
-        {showSpec(s, hasSpecContent) && (
-          <CollapsibleSection id="specification" label="Documentation" title="Specification">
-            <ProjectSpecReader specContent={project.spec_content!} />
-          </CollapsibleSection>
-        )}
-
-        {/* G. Messages (collapsible, starts collapsed if empty) */}
-        <CollapsibleSection
-          label="Communication"
-          title="Messages"
-          defaultOpen={(project.messages || []).length > 0}
-        >
-          <MessageThread
-            messages={project.messages || []}
-            onSend={handleSendMessage}
-          />
-        </CollapsibleSection>
-
-        {/* H. Activity Log (collapsible, starts collapsed) */}
-        <CollapsibleSection label="History" title="Activity" defaultOpen={false}>
-          <ProjectActivityFeed token={token} createdAt={project.created_at} />
-        </CollapsibleSection>
-
-        {/* ── Live-only sections ── */}
-
-        {showDomain(s) && (
-          <Section label="Infrastructure" title="Domain">
-            {(() => {
-              const hasCustomDomain = project.deliverables?.urls?.some(
-                (u) => u.url && !u.url.includes(".pages.dev")
-              );
-              const previewHost = project.deliverables?.preview_url
-                ? project.deliverables.preview_url.replace(/^https?:\/\//, "").replace(/\/.*$/, "")
-                : null;
-              return (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className={`h-2 w-2 rounded-full ${hasCustomDomain ? "bg-emerald-500" : "bg-amber-500"}`} />
-                    <span className="text-sm text-foreground">
-                      {hasCustomDomain ? "Custom domain connected" : "Using Kaizen subdomain"}
-                    </span>
-                  </div>
-                  {!hasCustomDomain && previewHost && (
-                    <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-foreground">Connect your domain</p>
-                        <p className="text-xs leading-[1.6] text-muted-foreground">
-                          Add a CNAME record with your DNS provider pointing to:
-                        </p>
-                        <div className="overflow-x-auto rounded-md bg-muted/50 px-3 py-2">
-                          <code className="text-xs text-foreground/80">
-                            CNAME &rarr; {previewHost}
-                          </code>
-                        </div>
-                      </div>
-                      <ProjectDomainCheck targetHost={previewHost} projectToken={token} />
-                      <p className="text-xs text-muted-foreground">
-                        <button
-                          onClick={() => {
-                            if (!token) return;
-                            api.sendMessage(token, "I'd like help connecting my custom domain to my website.").then(() => {
-                              toast.success("Message sent to Kaizen");
-                            }).catch(() => {
-                              toast.error("Failed to send message");
-                            });
-                          }}
-                          className="inline text-primary transition-colors duration-200 hover:text-primary/80"
-                        >
-                          Need help?
-                        </button>
+                {showBeforeAfter(s, hasOriginalScreenshot, hasPreviewUrl) && (
+                  <Card>
+                    <CardHeader>
+                      <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+                        Comparison
                       </p>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </Section>
-        )}
+                      <CardTitle className="font-light">Before / After</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ProjectBeforeAfter
+                        originalUrl={project.original_screenshot_url!}
+                        previewUrl={project.deliverables!.preview_url!}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+          )}
 
-        {s === "live" && (
-          <Section label="Performance" title="Analytics">
-            <ProjectAnalyticsSummary token={token} />
-          </Section>
-        )}
-
-        {showCms(s, hasSanityUrl) && (
-          <Section label="Setup" title="CMS">
-            <ProjectCmsOnboarding
-              sanityStudioUrl={project.deliverables!.sanity_studio_url!}
-            />
-          </Section>
-        )}
-
-        {showUpsell(s) && (
-          <Section label="Opportunity" title="What&apos;s Next?">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Link
-                href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=redesign`}
-                className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
-              >
-                <p className="text-sm font-medium text-foreground">Order a refresh</p>
-                <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
-                  Evolve your site with updated design and content
-                </p>
-              </Link>
-              <Link
-                href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=add-features&description=${encodeURIComponent("Add blog/CMS to existing site")}`}
-                className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
-              >
-                <p className="text-sm font-medium text-foreground">Add a blog or CMS</p>
-                <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
-                  Manage your own content with a headless CMS
-                </p>
-              </Link>
-              {project.tier !== "premium" && (
-                <Link
-                  href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=redesign&tier=premium`}
-                  className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
-                >
-                  <p className="text-sm font-medium text-foreground">Upgrade your plan</p>
-                  <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
-                    Premium: custom animations, CMS, priority support
+          {/* Editor tab */}
+          {hasEditorTab && (
+            <TabsContent value="editor" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+                    Content
                   </p>
-                </Link>
+                  <CardTitle className="font-light">Edit Content</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ProjectContentEditor
+                    slug={project.company_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}
+                    token={token}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Messages tab */}
+          <TabsContent value="messages" className="mt-6">
+            <Card>
+              <CardHeader>
+                <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+                  Communication
+                </p>
+                <CardTitle className="font-light">Messages</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MessageThread
+                  messages={project.messages || []}
+                  onSend={handleSendMessage}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Activity tab */}
+          <TabsContent value="activity" className="mt-6">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+                    History
+                  </p>
+                  <CardTitle className="font-light">Activity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ProjectActivityFeed token={token} createdAt={project.created_at} />
+                </CardContent>
+              </Card>
+
+              {showSpec(s, hasSpecContent) && (
+                <CollapsibleSection label="Documentation" title="Specification">
+                  <ProjectSpecReader specContent={project.spec_content!} />
+                </CollapsibleSection>
               )}
             </div>
-          </Section>
-        )}
-
-        {s === "live" && (
-          <Section label="Legal" title="Contract">
-            <ProjectContractViewer token={token} />
-          </Section>
-        )}
-
-        {showDeliverables(s, hasDeliverableUrls) && (
-          <Section label="Files" title="Deliverables">
-            <ul className="space-y-3">
-              {project.deliverables!.urls!.map((d, i) => (
-                <li key={i}>
-                  <a
-                    href={d.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 text-sm text-foreground transition-colors duration-200"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5 text-primary" />
-                    <span className="relative">
-                      {d.label}
-                      <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-0 group-hover:scale-x-100" />
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* ── Below-tabs sections (live-only) ── */}
+      {s === "live" && (
+        <div className="mt-10 space-y-6">
+          <Separator />
+
+          {showDomain(s) && (
+            <Card>
+              <CardHeader>
+                <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+                  Infrastructure
+                </p>
+                <CardTitle className="font-light">Domain</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const hasCustomDomain = project.deliverables?.urls?.some(
+                    (u) => u.url && !u.url.includes(".pages.dev")
+                  );
+                  const previewHost = project.deliverables?.preview_url
+                    ? project.deliverables.preview_url.replace(/^https?:\/\//, "").replace(/\/.*$/, "")
+                    : null;
+                  return (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <span className={`h-2 w-2 rounded-full ${hasCustomDomain ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        <span className="text-sm text-foreground">
+                          {hasCustomDomain ? "Custom domain connected" : "Using Kaizen subdomain"}
+                        </span>
+                      </div>
+                      {!hasCustomDomain && previewHost && (
+                        <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-foreground">Connect your domain</p>
+                            <p className="text-xs leading-[1.6] text-muted-foreground">
+                              Add a CNAME record with your DNS provider pointing to:
+                            </p>
+                            <div className="overflow-x-auto rounded-md bg-muted/50 px-3 py-2">
+                              <code className="text-xs text-foreground/80">
+                                CNAME &rarr; {previewHost}
+                              </code>
+                            </div>
+                          </div>
+                          <ProjectDomainCheck targetHost={previewHost} projectToken={token} />
+                          <p className="text-xs text-muted-foreground">
+                            <button
+                              onClick={() => {
+                                if (!token) return;
+                                api.sendMessage(token, "I'd like help connecting my custom domain to my website.").then(() => {
+                                  toast.success("Message sent to Kaizen");
+                                }).catch(() => {
+                                  toast.error("Failed to send message");
+                                });
+                              }}
+                              className="inline text-primary transition-colors duration-200 hover:text-primary/80"
+                            >
+                              Need help?
+                            </button>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+                Performance
+              </p>
+              <CardTitle className="font-light">Analytics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProjectAnalyticsSummary token={token} />
+            </CardContent>
+          </Card>
+
+          {showCms(s, hasSanityUrl) && (
+            <Card>
+              <CardHeader>
+                <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+                  Setup
+                </p>
+                <CardTitle className="font-light">CMS</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProjectCmsOnboarding
+                  sanityStudioUrl={project.deliverables!.sanity_studio_url!}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* What's Next upsell */}
+          <Card>
+            <CardHeader>
+              <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+                Opportunity
+              </p>
+              <CardTitle className="font-light">What&apos;s Next?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Link
+                  href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=redesign`}
+                  className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
+                >
+                  <p className="text-sm font-medium text-foreground">Order a refresh</p>
+                  <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
+                    Evolve your site with updated design and content
+                  </p>
+                </Link>
+                <Link
+                  href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=add-features&description=${encodeURIComponent("Add blog/CMS to existing site")}`}
+                  className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
+                >
+                  <p className="text-sm font-medium text-foreground">Add a blog or CMS</p>
+                  <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
+                    Manage your own content with a headless CMS
+                  </p>
+                </Link>
+                {project.tier !== "premium" && (
+                  <Link
+                    href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=redesign&tier=premium`}
+                    className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
+                  >
+                    <p className="text-sm font-medium text-foreground">Upgrade your plan</p>
+                    <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
+                      Premium: custom animations, CMS, priority support
+                    </p>
+                  </Link>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+                Legal
+              </p>
+              <CardTitle className="font-light">Contract</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProjectContractViewer token={token} />
+            </CardContent>
+          </Card>
+
+          {hasDeliverableUrls && (
+            <Card>
+              <CardHeader>
+                <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+                  Files
+                </p>
+                <CardTitle className="font-light">Deliverables</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3">
+                  {project.deliverables!.urls!.map((d, i) => (
+                    <li key={i}>
+                      <a
+                        href={d.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group inline-flex items-center gap-2 text-sm text-foreground transition-colors duration-200"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5 text-primary" />
+                        <span className="relative">
+                          {d.label}
+                          <span className="absolute inset-x-0 -bottom-px h-px bg-primary/40 transition-transform duration-300 origin-left scale-x-0 group-hover:scale-x-100" />
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 }
