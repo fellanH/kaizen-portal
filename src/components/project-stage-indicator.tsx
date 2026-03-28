@@ -1,9 +1,11 @@
+import { Check } from "lucide-react";
+
 const STAGES = [
-  { key: "intake_received", label: "Received", subtitle: "Project received" },
-  { key: "spec_writing", label: "Scoping", subtitle: "Analyzing your website (~5 min)" },
-  { key: "building", label: "Building", subtitle: "Generating your website (~2 min)" },
-  { key: "review", label: "Review", subtitle: "Preview ready for feedback" },
-  { key: "live", label: "Delivered", subtitle: "Website is live" },
+  { key: "intake_received", label: "Received" },
+  { key: "spec_writing", label: "Scoping" },
+  { key: "building", label: "Building" },
+  { key: "review", label: "Review" },
+  { key: "live", label: "Delivered" },
 ] as const;
 
 /* Map actual API statuses to the display stage they belong to */
@@ -19,46 +21,45 @@ const STATUS_TO_STAGE: Record<string, string> = {
   live: "live",
 };
 
-const stageColors: Record<string, string> = {
-  intake_received: "bg-muted-foreground/60",
-  spec_writing: "bg-amber-500",
-  building: "bg-blue-500",
-  review: "bg-primary",
-  live: "bg-emerald-500",
-};
-
 export function ProjectStageIndicator({ status }: { status: string }) {
   const mappedStage = STATUS_TO_STAGE[status] || "intake_received";
   const currentIdx = STAGES.findIndex((s) => s.key === mappedStage);
-  const dotColor = stageColors[mappedStage] || "bg-muted-foreground/60";
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-0">
       {STAGES.map((stage, i) => {
         const isPast = i < currentIdx;
         const isCurrent = i === currentIdx;
 
         return (
-          <div key={stage.key} className="flex items-center gap-1.5">
+          <div key={stage.key} className="flex items-center">
             {i > 0 && (
               <div
-                className={`h-px w-4 sm:w-6 ${
-                  isPast || isCurrent ? dotColor : "bg-border"
+                className={`h-px w-5 sm:w-8 transition-colors duration-300 ${
+                  isPast || isCurrent ? "bg-primary/40" : "bg-border"
                 }`}
               />
             )}
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <div
-                className={`rounded-full transition-all duration-300 ${
-                  isCurrent
-                    ? `h-2.5 w-2.5 ${dotColor} ring-2 ring-offset-1 ring-offset-background ${dotColor.replace("bg-", "ring-")}/30`
-                    : isPast
-                      ? `h-2 w-2 ${dotColor}`
-                      : "h-2 w-2 bg-border"
+                className={`flex items-center justify-center rounded-full transition-all duration-300 ${
+                  isPast
+                    ? "h-5 w-5 bg-primary/15"
+                    : isCurrent
+                      ? "h-5 w-5 bg-primary/15 ring-2 ring-primary/20 ring-offset-1 ring-offset-background"
+                      : "h-5 w-5 bg-muted"
                 }`}
-              />
+              >
+                {isPast ? (
+                  <Check className="h-3 w-3 text-primary" strokeWidth={2.5} />
+                ) : isCurrent ? (
+                  <div className="h-2 w-2 rounded-full bg-primary" />
+                ) : (
+                  <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                )}
+              </div>
               <span
-                className={`text-[9px] leading-none ${
+                className={`hidden text-[11px] sm:inline ${
                   isCurrent
                     ? "font-medium text-foreground"
                     : isPast
@@ -68,11 +69,6 @@ export function ProjectStageIndicator({ status }: { status: string }) {
               >
                 {stage.label}
               </span>
-              {isCurrent && (
-                <span className="mt-0.5 max-w-[80px] text-center text-[8px] leading-tight text-muted-foreground/70 sm:max-w-[100px]">
-                  {stage.subtitle}
-                </span>
-              )}
             </div>
           </div>
         );

@@ -3,9 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { api, type Project, type Message } from "@/lib/api";
-import { ExternalLink, ChevronDown, Monitor, Tablet, Smartphone } from "lucide-react";
+import { ExternalLink, Monitor, Tablet, Smartphone, ChevronDown, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { ProjectSpecReader } from "@/components/project-spec-reader";
+import { ProjectBrief } from "@/components/project-brief";
 import { ProjectContractViewer } from "@/components/project-contract-viewer";
 import { ProjectBeforeAfter } from "@/components/project-before-after";
 import { ProjectActivityFeed } from "@/components/project-activity-feed";
@@ -22,17 +22,17 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
-/* ── Status config with semantic colors ── */
-const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
-  intake_received: { label: "Received", className: "status-neutral", dot: "bg-muted-foreground/60" },
-  spec_writing: { label: "Scoping", className: "status-amber", dot: "bg-amber-500" },
-  spec_ready: { label: "Spec Ready", className: "status-amber", dot: "bg-amber-500" },
-  building: { label: "Building", className: "status-blue", dot: "bg-blue-500" },
-  pending_review: { label: "Under Review", className: "status-blue", dot: "bg-blue-500" },
-  review_ready: { label: "Review Ready", className: "status-orange", dot: "bg-primary" },
-  approved: { label: "Approved", className: "status-emerald", dot: "bg-emerald-500" },
-  revising: { label: "Revising", className: "status-amber", dot: "bg-amber-500" },
-  live: { label: "Delivered", className: "status-emerald", dot: "bg-emerald-500" },
+/* ── Status config ── */
+const statusConfig: Record<string, { label: string; className: string }> = {
+  intake_received: { label: "Received", className: "status-neutral" },
+  spec_writing: { label: "Scoping", className: "status-amber" },
+  spec_ready: { label: "Spec Ready", className: "status-amber" },
+  building: { label: "Building", className: "status-blue" },
+  pending_review: { label: "Under Review", className: "status-blue" },
+  review_ready: { label: "Review Ready", className: "status-orange" },
+  approved: { label: "Approved", className: "status-emerald" },
+  revising: { label: "Revising", className: "status-amber" },
+  live: { label: "Delivered", className: "status-emerald" },
 };
 
 const tierLabels: Record<string, string> = {
@@ -41,7 +41,7 @@ const tierLabels: Record<string, string> = {
   premium: "Premium",
 };
 
-/* ── Message consolidation: merge rapid-fire messages (<60s, same sender) ── */
+/* ── Message consolidation ── */
 function consolidateMessages(msgs: Message[]): Message[] {
   const result: Message[] = [];
   for (const msg of msgs) {
@@ -158,7 +158,7 @@ function MessageThread({
   );
 }
 
-/* ── Preview Frame with viewport switcher ── */
+/* ── Preview Frame ── */
 function PreviewFrame({ url }: { url: string }) {
   const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">("desktop");
   const widths = { mobile: 375, tablet: 768, desktop: 1280 };
@@ -207,46 +207,32 @@ function PreviewFrame({ url }: { url: string }) {
   );
 }
 
-/* ── Collapsible section wrapper ── */
-function CollapsibleSection({
-  id,
-  label,
-  title,
-  defaultOpen = true,
-  children,
-}: {
-  id?: string;
-  label?: string;
-  title?: string;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
+/* ── Compact Activity (inline, collapsible) ── */
+function CompactActivity({ token, createdAt }: { token: string; createdAt?: string }) {
+  const [open, setOpen] = useState(false);
 
   return (
-    <Card id={id}>
+    <div className="rounded-lg border border-border/40 bg-muted/10">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-5 pt-4 pb-2 text-left"
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
       >
-        <div>
-          {label && (
-            <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-              {label}
-            </p>
-          )}
-          {title && (
-            <h2 className="mt-0.5 text-base font-light tracking-[-0.02em]">{title}</h2>
-          )}
+        <div className="flex items-center gap-2">
+          <Clock className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <span className="text-xs font-medium text-muted-foreground">Activity</span>
         </div>
         <ChevronDown
-          className={`h-4 w-4 text-muted-foreground/40 transition-transform duration-200 ${
+          className={`h-3.5 w-3.5 text-muted-foreground/40 transition-transform duration-200 ${
             open ? "rotate-180" : ""
           }`}
         />
       </button>
-      {open && <CardContent className="px-5 pb-5">{children}</CardContent>}
-    </Card>
+      {open && (
+        <div className="border-t border-border/30 px-4 py-3">
+          <ProjectActivityFeed token={token} createdAt={createdAt} />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -256,37 +242,19 @@ function DetailSkeleton() {
     <div className="mx-auto max-w-4xl px-6 py-10 sm:px-8 sm:py-14">
       <div className="space-y-3">
         <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-10 w-2/3" />
-        <Skeleton className="h-5 w-1/3" />
+        <Skeleton className="h-8 w-2/3" />
+        <Skeleton className="h-4 w-1/3" />
       </div>
-      <Separator className="mt-6" />
       <div className="mt-8 space-y-4">
         <Skeleton className="h-10 w-80" />
-        <Skeleton className="h-[500px] w-full rounded-lg" />
+        <Skeleton className="h-[400px] w-full rounded-lg" />
       </div>
     </div>
   );
 }
 
-/* ── Visibility helpers ── */
+/* ── Types ── */
 type Status = "intake_received" | "spec_writing" | "spec_ready" | "building" | "pending_review" | "review_ready" | "approved" | "revising" | "live";
-
-function showPreview(hasUrl: boolean) {
-  return hasUrl;
-}
-function showBeforeAfter(s: Status, hasOriginal: boolean, hasPreview: boolean) {
-  if (!hasOriginal || !hasPreview) return false;
-  return s === "review_ready" || s === "live";
-}
-function showSpec(s: Status, hasContent: boolean) {
-  if (!hasContent) return false;
-  return s === "spec_writing" || s === "spec_ready" || s === "building" || s === "review_ready" || s === "pending_review";
-}
-function showDomain(s: Status) { return s === "live"; }
-function showCms(s: Status, hasUrl: boolean) { return s === "live" && hasUrl; }
-function showEditor(s: Status, hasPreview: boolean) {
-  return hasPreview && (s === "review_ready" || s === "pending_review" || s === "building");
-}
 
 /* ── Main Component ── */
 export function ProjectDetail({ token }: { token: string }) {
@@ -421,13 +389,14 @@ export function ProjectDetail({ token }: { token: string }) {
   const hasDeliverableUrls = !!project.deliverables?.urls && project.deliverables.urls.length > 0;
   const messageCount = (project.messages || []).length;
 
-  // Determine default tab: Preview if available, otherwise Messages
-  const hasEditorTab = showEditor(s, hasPreviewUrl);
-  const defaultTab = hasPreviewUrl ? "preview" : "messages";
+  const isEarlyStage = ["intake_received", "spec_writing", "spec_ready", "building"].includes(s);
+  const isReviewStage = ["pending_review", "review_ready", "revising"].includes(s);
+  const isLive = s === "live";
+  const hasEditor = hasPreviewUrl && (s === "review_ready" || s === "pending_review" || s === "building");
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 sm:px-8 sm:py-14">
-      {/* ── Page header (always visible above tabs) ── */}
+      {/* ── A. HEADER: compact, always visible ── */}
       <div className="kaizen-enter-1">
         <nav className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
           <Link
@@ -440,331 +409,173 @@ export function ProjectDetail({ token }: { token: string }) {
           <span className="text-foreground">{project.company_name}</span>
         </nav>
 
-        <div className="flex items-start justify-between gap-4">
-          <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1
-              className="text-[clamp(1.75rem,1.14vw+1.5rem,2.5rem)] font-light tracking-tight text-foreground"
+              className="text-2xl font-light tracking-tight text-foreground sm:text-3xl"
               style={{ letterSpacing: "-0.03em", lineHeight: "1.1" }}
             >
               {project.company_name}
             </h1>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className={`gap-1.5 border-0 ${cfg.className}`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-                {cfg.label}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {tierLabels[project.tier] || project.tier}
-              </span>
-              <span className="text-xs text-muted-foreground/40">&middot;</span>
-              <span className="text-xs text-muted-foreground">
-                Started {new Date(project.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-              </span>
-            </div>
+            <Badge variant="outline" className={`gap-1.5 border-0 text-[11px] ${cfg.className}`}>
+              {cfg.label}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              {tierLabels[project.tier] || project.tier}
+            </span>
+            <span className="hidden text-xs text-muted-foreground/40 sm:inline">&middot;</span>
+            <span className="hidden text-xs text-muted-foreground sm:inline">
+              {new Date(project.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+            </span>
           </div>
 
-          {/* Stage indicator compact */}
-          <div className="hidden sm:block">
-            <ProjectStageIndicator status={project.status} />
-          </div>
+          {/* B. PROGRESS TIMELINE: inline with header */}
+          <ProjectStageIndicator status={project.status} />
         </div>
-
-        {/* Primary action card */}
-        <div className="mt-6">
-          <ProjectPrimaryAction
-            project={project}
-            token={token}
-            onApprove={handleApprove}
-            onRevise={handleRevision}
-            actionLoading={actionLoading}
-          />
-        </div>
-
-        <Separator className="mt-6" />
       </div>
 
-      {/* ── Mobile stage indicator ── */}
-      <div className="mt-4 flex justify-center sm:hidden">
-        <ProjectStageIndicator status={project.status} />
-      </div>
-
-      {/* ── Tabbed content ── */}
+      {/* ── Primary action card ── */}
       <div className="mt-6">
-        <Tabs defaultValue={defaultTab}>
-          <TabsList variant="line" className="w-full justify-start gap-0">
-            {hasPreviewUrl && (
-              <TabsTrigger value="preview" className="text-sm font-light">
-                Preview
-              </TabsTrigger>
-            )}
-            {hasEditorTab && (
-              <TabsTrigger value="editor" className="text-sm font-light">
-                Editor
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="messages" className="text-sm font-light">
-              Messages
-              {messageCount > 0 && (
-                <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/10 px-1 text-[0.6rem] font-medium text-primary">
-                  {messageCount}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="text-sm font-light">
-              Activity
-            </TabsTrigger>
-          </TabsList>
+        <ProjectPrimaryAction
+          project={project}
+          token={token}
+          onApprove={handleApprove}
+          onRevise={handleRevision}
+          actionLoading={actionLoading}
+        />
+      </div>
 
-          {/* Preview tab */}
-          {hasPreviewUrl && (
-            <TabsContent value="preview" className="mt-6">
-              <div className="space-y-8">
-                <PreviewFrame url={previewUrl!} />
+      {/* ── C. PRIMARY CONTENT AREA (status-driven) ── */}
 
-                {showBeforeAfter(s, hasOriginalScreenshot, hasPreviewUrl) && (
-                  <Card>
-                    <CardHeader>
-                      <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-                        Comparison
-                      </p>
-                      <CardTitle className="font-light">Before / After</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ProjectBeforeAfter
-                        originalUrl={project.original_screenshot_url!}
-                        previewUrl={project.deliverables!.preview_url!}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </TabsContent>
+      {/* Early stage: status card + project brief */}
+      {isEarlyStage && (
+        <div className="mt-8 space-y-6">
+          {hasSpecContent && (
+            <div>
+              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/60">
+                Project Brief
+              </p>
+              <ProjectBrief specContent={project.spec_content!} />
+            </div>
           )}
 
-          {/* Editor tab */}
-          {hasEditorTab && (
-            <TabsContent value="editor" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-                    Content
-                  </p>
-                  <CardTitle className="font-light">Edit Content</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ProjectContentEditor
-                    slug={project.company_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}
-                    token={token}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
-
-          {/* Messages tab */}
-          <TabsContent value="messages" className="mt-6">
-            <Card>
-              <CardHeader>
-                <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-                  Communication
+          {/* Inline messages if any exist */}
+          {messageCount > 0 && (
+            <Card className="border-border/40">
+              <CardContent className="px-5 py-4">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/60">
+                  Messages
                 </p>
-                <CardTitle className="font-light">Messages</CardTitle>
-              </CardHeader>
-              <CardContent>
                 <MessageThread
                   messages={project.messages || []}
                   onSend={handleSendMessage}
                 />
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          {/* Activity tab */}
-          <TabsContent value="activity" className="mt-6">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-                    History
-                  </p>
-                  <CardTitle className="font-light">Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ProjectActivityFeed token={token} createdAt={project.created_at} />
-                </CardContent>
-              </Card>
+          {/* Compact activity */}
+          <CompactActivity token={token} createdAt={project.created_at} />
+        </div>
+      )}
 
-              {showSpec(s, hasSpecContent) && (
-                <CollapsibleSection label="Documentation" title="Specification">
-                  <ProjectSpecReader specContent={project.spec_content!} />
-                </CollapsibleSection>
+      {/* Review stage: preview dominates, tabs below */}
+      {isReviewStage && (
+        <div className="mt-8 space-y-6">
+          {hasPreviewUrl && (
+            <PreviewFrame url={previewUrl!} />
+          )}
+
+          {showBeforeAfter(s, hasOriginalScreenshot, hasPreviewUrl) && (
+            <ProjectBeforeAfter
+              originalUrl={project.original_screenshot_url!}
+              previewUrl={project.deliverables!.preview_url!}
+            />
+          )}
+
+          <Tabs defaultValue="brief">
+            <TabsList variant="line" className="w-full justify-start gap-0">
+              {hasSpecContent && (
+                <TabsTrigger value="brief" className="text-sm font-light">
+                  Brief
+                </TabsTrigger>
               )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* ── Below-tabs sections (live-only) ── */}
-      {s === "live" && (
-        <div className="mt-10 space-y-6">
-          <Separator />
-
-          {showDomain(s) && (
-            <Card>
-              <CardHeader>
-                <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-                  Infrastructure
-                </p>
-                <CardTitle className="font-light">Domain</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {(() => {
-                  const hasCustomDomain = project.deliverables?.urls?.some(
-                    (u) => u.url && !u.url.includes(".pages.dev")
-                  );
-                  const previewHost = project.deliverables?.preview_url
-                    ? project.deliverables.preview_url.replace(/^https?:\/\//, "").replace(/\/.*$/, "")
-                    : null;
-                  return (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <span className={`h-2 w-2 rounded-full ${hasCustomDomain ? "bg-emerald-500" : "bg-amber-500"}`} />
-                        <span className="text-sm text-foreground">
-                          {hasCustomDomain ? "Custom domain connected" : "Using Kaizen subdomain"}
-                        </span>
-                      </div>
-                      {!hasCustomDomain && previewHost && (
-                        <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-foreground">Connect your domain</p>
-                            <p className="text-xs leading-[1.6] text-muted-foreground">
-                              Add a CNAME record with your DNS provider pointing to:
-                            </p>
-                            <div className="overflow-x-auto rounded-md bg-muted/50 px-3 py-2">
-                              <code className="text-xs text-foreground/80">
-                                CNAME &rarr; {previewHost}
-                              </code>
-                            </div>
-                          </div>
-                          <ProjectDomainCheck targetHost={previewHost} projectToken={token} />
-                          <p className="text-xs text-muted-foreground">
-                            <button
-                              onClick={() => {
-                                if (!token) return;
-                                api.sendMessage(token, "I'd like help connecting my custom domain to my website.").then(() => {
-                                  toast.success("Message sent to Kaizen");
-                                }).catch(() => {
-                                  toast.error("Failed to send message");
-                                });
-                              }}
-                              className="inline text-primary transition-colors duration-200 hover:text-primary/80"
-                            >
-                              Need help?
-                            </button>
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-                Performance
-              </p>
-              <CardTitle className="font-light">Analytics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProjectAnalyticsSummary token={token} />
-            </CardContent>
-          </Card>
-
-          {showCms(s, hasSanityUrl) && (
-            <Card>
-              <CardHeader>
-                <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-                  Setup
-                </p>
-                <CardTitle className="font-light">CMS</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ProjectCmsOnboarding
-                  sanityStudioUrl={project.deliverables!.sanity_studio_url!}
-                />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* What's Next upsell */}
-          <Card>
-            <CardHeader>
-              <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-                Opportunity
-              </p>
-              <CardTitle className="font-light">What&apos;s Next?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Link
-                  href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=redesign`}
-                  className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
-                >
-                  <p className="text-sm font-medium text-foreground">Order a refresh</p>
-                  <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
-                    Evolve your site with updated design and content
-                  </p>
-                </Link>
-                <Link
-                  href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=add-features&description=${encodeURIComponent("Add blog/CMS to existing site")}`}
-                  className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
-                >
-                  <p className="text-sm font-medium text-foreground">Add a blog or CMS</p>
-                  <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
-                    Manage your own content with a headless CMS
-                  </p>
-                </Link>
-                {project.tier !== "premium" && (
-                  <Link
-                    href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=redesign&tier=premium`}
-                    className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
-                  >
-                    <p className="text-sm font-medium text-foreground">Upgrade your plan</p>
-                    <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
-                      Premium: custom animations, CMS, priority support
-                    </p>
-                  </Link>
+              {hasEditor && (
+                <TabsTrigger value="editor" className="text-sm font-light">
+                  Editor
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="messages" className="text-sm font-light">
+                Messages
+                {messageCount > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/10 px-1 text-[0.6rem] font-medium text-primary">
+                    {messageCount}
+                  </span>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </TabsTrigger>
+            </TabsList>
 
-          <Card>
-            <CardHeader>
-              <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-                Legal
-              </p>
-              <CardTitle className="font-light">Contract</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProjectContractViewer token={token} />
-            </CardContent>
-          </Card>
+            {hasSpecContent && (
+              <TabsContent value="brief" className="mt-6">
+                <ProjectBrief specContent={project.spec_content!} />
+              </TabsContent>
+            )}
+
+            {hasEditor && (
+              <TabsContent value="editor" className="mt-6">
+                <ProjectContentEditor
+                  slug={project.company_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}
+                  token={token}
+                />
+              </TabsContent>
+            )}
+
+            <TabsContent value="messages" className="mt-6">
+              <MessageThread
+                messages={project.messages || []}
+                onSend={handleSendMessage}
+              />
+            </TabsContent>
+          </Tabs>
+
+          {/* Compact activity */}
+          <CompactActivity token={token} createdAt={project.created_at} />
+        </div>
+      )}
+
+      {/* Live stage: site link, deliverables, domain */}
+      {isLive && (
+        <div className="mt-8 space-y-6">
+          {/* Site links */}
+          {hasPreviewUrl && (
+            <Card className="border-border/40">
+              <CardContent className="flex items-center justify-between px-5 py-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Your website is live</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {previewUrl!.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                  </p>
+                </div>
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1.5 text-xs font-medium text-emerald-600 transition-colors duration-200 hover:bg-emerald-500/25 dark:text-emerald-400"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Visit
+                </a>
+              </CardContent>
+            </Card>
+          )}
 
           {hasDeliverableUrls && (
-            <Card>
-              <CardHeader>
-                <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
-                  Files
+            <Card className="border-border/40">
+              <CardContent className="px-5 py-4">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/60">
+                  Deliverables
                 </p>
-                <CardTitle className="font-light">Deliverables</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
+                <ul className="space-y-2.5">
                   {project.deliverables!.urls!.map((d, i) => (
                     <li key={i}>
                       <a
@@ -785,8 +596,178 @@ export function ProjectDetail({ token }: { token: string }) {
               </CardContent>
             </Card>
           )}
+
+          {/* Domain */}
+          <DomainSection project={project} token={token} />
+
+          {/* Analytics */}
+          <Card className="border-border/40">
+            <CardContent className="px-5 py-4">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/60">
+                Performance
+              </p>
+              <ProjectAnalyticsSummary token={token} />
+            </CardContent>
+          </Card>
+
+          {/* CMS onboarding */}
+          {hasSanityUrl && (
+            <Card className="border-border/40">
+              <CardContent className="px-5 py-4">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/60">
+                  CMS
+                </p>
+                <ProjectCmsOnboarding
+                  sanityStudioUrl={project.deliverables!.sanity_studio_url!}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Tabs: Messages | Activity */}
+          <Tabs defaultValue={messageCount > 0 ? "messages" : "activity"}>
+            <TabsList variant="line" className="w-full justify-start gap-0">
+              <TabsTrigger value="messages" className="text-sm font-light">
+                Messages
+                {messageCount > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/10 px-1 text-[0.6rem] font-medium text-primary">
+                    {messageCount}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="text-sm font-light">
+                Activity
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="messages" className="mt-6">
+              <MessageThread
+                messages={project.messages || []}
+                onSend={handleSendMessage}
+              />
+            </TabsContent>
+
+            <TabsContent value="activity" className="mt-6">
+              <ProjectActivityFeed token={token} createdAt={project.created_at} />
+            </TabsContent>
+          </Tabs>
+
+          <Separator />
+
+          {/* What's Next */}
+          <div>
+            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/60">
+              What&apos;s Next
+            </p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Link
+                href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=redesign`}
+                className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
+              >
+                <p className="text-sm font-medium text-foreground">Order a refresh</p>
+                <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
+                  Evolve your site with updated design and content
+                </p>
+              </Link>
+              <Link
+                href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=add-features&description=${encodeURIComponent("Add blog/CMS to existing site")}`}
+                className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
+              >
+                <p className="text-sm font-medium text-foreground">Add a blog or CMS</p>
+                <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
+                  Manage your own content with a headless CMS
+                </p>
+              </Link>
+              {project.tier !== "premium" && (
+                <Link
+                  href={`/projects/new?company=${encodeURIComponent(project.company_name)}&type=redesign&tier=premium`}
+                  className="group rounded-lg border border-border/60 bg-card p-4 transition-all duration-300 hover:border-primary/30 hover:bg-primary/[0.03]"
+                >
+                  <p className="text-sm font-medium text-foreground">Upgrade your plan</p>
+                  <p className="mt-1 text-xs leading-[1.5] text-muted-foreground/70">
+                    Premium: custom animations, CMS, priority support
+                  </p>
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Contract */}
+          <Card className="border-border/40">
+            <CardContent className="px-5 py-4">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/60">
+                Contract
+              </p>
+              <ProjectContractViewer token={token} />
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
   );
+}
+
+/* ── Domain Section (live only) ── */
+function DomainSection({ project, token }: { project: Project; token: string }) {
+  const hasCustomDomain = project.deliverables?.urls?.some(
+    (u) => u.url && !u.url.includes(".pages.dev")
+  );
+  const previewHost = project.deliverables?.preview_url
+    ? project.deliverables.preview_url.replace(/^https?:\/\//, "").replace(/\/.*$/, "")
+    : null;
+
+  return (
+    <Card className="border-border/40">
+      <CardContent className="px-5 py-4">
+        <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/60">
+          Domain
+        </p>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className={`h-2 w-2 rounded-full ${hasCustomDomain ? "bg-emerald-500" : "bg-amber-500"}`} />
+            <span className="text-sm text-foreground">
+              {hasCustomDomain ? "Custom domain connected" : "Using Kaizen subdomain"}
+            </span>
+          </div>
+          {!hasCustomDomain && previewHost && (
+            <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Connect your domain</p>
+                <p className="text-xs leading-[1.6] text-muted-foreground">
+                  Add a CNAME record with your DNS provider pointing to:
+                </p>
+                <div className="overflow-x-auto rounded-md bg-muted/50 px-3 py-2">
+                  <code className="text-xs text-foreground/80">
+                    CNAME &rarr; {previewHost}
+                  </code>
+                </div>
+              </div>
+              <ProjectDomainCheck targetHost={previewHost} projectToken={token} />
+              <p className="text-xs text-muted-foreground">
+                <button
+                  onClick={() => {
+                    if (!token) return;
+                    api.sendMessage(token, "I'd like help connecting my custom domain to my website.").then(() => {
+                      toast.success("Message sent to Kaizen");
+                    }).catch(() => {
+                      toast.error("Failed to send message");
+                    });
+                  }}
+                  className="inline text-primary transition-colors duration-200 hover:text-primary/80"
+                >
+                  Need help?
+                </button>
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ── Helpers ── */
+function showBeforeAfter(s: Status, hasOriginal: boolean, hasPreview: boolean) {
+  if (!hasOriginal || !hasPreview) return false;
+  return s === "review_ready";
 }
