@@ -375,20 +375,19 @@ export const api = {
     }
   },
 
-  submitProject(data: {
-    company: string;
-    name: string;
-    email: string;
-    url?: string;
-    type: string;
-    tier: string;
-    description: string;
-    timeline: string;
-  }) {
-    return request<{ ok: boolean; token?: string }>("/submit", {
+  createCheckoutSession(data: { company: string; url: string; tier: string }) {
+    return request<{ url: string }>("/checkout", {
       method: "POST",
       body: JSON.stringify(data),
     });
+  },
+
+  getStripeSession(sessionId: string) {
+    return fetch(`${API_BASE}/stripe-session/${encodeURIComponent(sessionId)}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`API error ${res.status}`);
+        return res.json() as Promise<{ token: string; tier: string; company: string }>;
+      });
   },
 
   setToken,
