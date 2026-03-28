@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { type Message } from "@/lib/api";
 import { useProjects } from "@/lib/projects-context";
+import { slugify } from "@/lib/slugify";
 import { MessageSquare, Search } from "lucide-react";
 
 interface ProjectMessage extends Message {
@@ -155,7 +156,7 @@ export default function MessagesPage() {
                   {msgs.map((msg, i) => (
                     <Link
                       key={msg.id}
-                      href={`/projects/detail#${msg.project_token}`}
+                      href={`/projects/${slugify(msg.company_name)}`}
                       className="ds-section group block rounded-lg px-4 py-3 transition-colors duration-200 hover:bg-muted/50"
                       style={{ animationDelay: `${i * 40}ms` }}
                     >

@@ -318,14 +318,15 @@ function showUpsell(s: Status) { return s === "live"; }
 function showDeliverables(s: Status, hasUrls: boolean) { return s === "live" && hasUrls; }
 
 /* ── Main Component ── */
-export function ProjectDetail() {
+export function ProjectDetail({ token: tokenProp }: { token?: string } = {}) {
   const searchParams = useSearchParams();
   const [hashToken, setHashToken] = useState<string | null>(null);
   useEffect(() => {
+    if (tokenProp) return; // skip hash extraction when token provided via prop
     const hash = window.location.hash.slice(1).split('#')[0];
     if (hash) setHashToken(hash);
-  }, []);
-  const token = hashToken || searchParams.get("token");
+  }, [tokenProp]);
+  const token = tokenProp || hashToken || searchParams.get("token");
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);

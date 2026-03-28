@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ExternalLink, Plus, PlusCircle } from "lucide-react";
 import { type Project } from "@/lib/api";
 import { useProjects } from "@/lib/projects-context";
+import { slugify } from "@/lib/slugify";
 
 /* ── Pipeline stages in logical order ── */
 const PIPELINE_STAGES = [
@@ -185,7 +186,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
   return (
     <Link
-      href={`/projects/detail#${project.token}`}
+      href={`/projects/${slugify(project.company_name)}`}
       className="project-card-enter group block"
       style={{ animationDelay: `${index * 80}ms` }}
     >

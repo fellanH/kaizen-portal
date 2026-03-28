@@ -1,4 +1,5 @@
-# Pass through real portal routes (first match wins)
-/projects/detail /projects/detail 200
-/projects/detail?* /projects/detail 200
-/projects/new /projects/new 200
+# Exact routes first (CF Pages: first match wins)
+/projects/new /projects/new.html 200
+/projects/detail /projects/detail.html 200
+# Slug-based project routes: all other /projects/* fall to the catch-all page
+/projects/* /projects/_.html 200
