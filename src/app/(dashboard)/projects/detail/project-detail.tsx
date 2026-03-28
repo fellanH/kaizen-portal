@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, type Project, type Message } from "@/lib/api";
 import { ExternalLink, ChevronDown, Monitor, Tablet, Smartphone } from "lucide-react";
@@ -290,15 +289,7 @@ function showEditor(s: Status, hasPreview: boolean) {
 }
 
 /* ── Main Component ── */
-export function ProjectDetail({ token: tokenProp }: { token?: string } = {}) {
-  const searchParams = useSearchParams();
-  const [hashToken, setHashToken] = useState<string | null>(null);
-  useEffect(() => {
-    if (tokenProp) return;
-    const hash = window.location.hash.slice(1).split('#')[0];
-    if (hash) setHashToken(hash);
-  }, [tokenProp]);
-  const token = tokenProp || hashToken || searchParams.get("token");
+export function ProjectDetail({ token }: { token: string }) {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
