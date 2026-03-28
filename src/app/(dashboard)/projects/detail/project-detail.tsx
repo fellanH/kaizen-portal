@@ -4,8 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, type Project, type Message } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectSpecReader } from "@/components/project-spec-reader";
 import { ProjectContractViewer } from "@/components/project-contract-viewer";
@@ -23,6 +22,7 @@ import { ProjectContentEditor } from "@/components/project-content-editor";
 const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
   intake_received: { label: "Received", className: "status-neutral", dot: "bg-muted-foreground/60" },
   spec_writing: { label: "Scoping", className: "status-amber", dot: "bg-amber-500" },
+  spec_ready: { label: "Spec Ready", className: "status-amber", dot: "bg-amber-500" },
   building: { label: "Building", className: "status-blue", dot: "bg-blue-500" },
   pending_review: { label: "Under Review", className: "status-blue", dot: "bg-blue-500" },
   review_ready: { label: "Review Ready", className: "status-orange", dot: "bg-primary" },
@@ -231,6 +231,50 @@ function Section({
   );
 }
 
+/* ── Collapsible section wrapper ── */
+function CollapsibleSection({
+  id,
+  label,
+  title,
+  defaultOpen = true,
+  children,
+}: {
+  id?: string;
+  label?: string;
+  title?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div id={id} className="ds-section">
+      <div className="ds-rule mb-6" />
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between text-left"
+      >
+        <div>
+          {label && (
+            <p className="text-[0.6rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+              {label}
+            </p>
+          )}
+          {title && (
+            <h2 className="mt-1 text-lg font-light tracking-[-0.02em]">{title}</h2>
+          )}
+        </div>
+        <ChevronDown
+          className={`h-4 w-4 text-muted-foreground/40 transition-transform duration-200 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      {open && <div className="mt-5">{children}</div>}
+    </div>
+  );
+}
+
 /* ── Loading skeleton ── */
 function DetailSkeleton() {
   return (
@@ -255,22 +299,18 @@ function DetailSkeleton() {
 }
 
 /* ── Visibility helpers ── */
-type Status = "intake_received" | "spec_writing" | "building" | "review_ready" | "live";
+type Status = "intake_received" | "spec_writing" | "spec_ready" | "building" | "pending_review" | "review_ready" | "approved" | "revising" | "live";
 
-function showPreview(s: Status, hasUrl: boolean) {
-  if (!hasUrl && s !== "review_ready") return false;
-  return s === "building" || s === "review_ready" || s === "live";
+function showPreview(hasUrl: boolean) {
+  return hasUrl;
 }
 function showBeforeAfter(s: Status, hasOriginal: boolean, hasPreview: boolean) {
   if (!hasOriginal || !hasPreview) return false;
   return s === "review_ready" || s === "live";
 }
-function showTimeline(s: Status) {
-  return s !== "live";
-}
 function showSpec(s: Status, hasContent: boolean) {
   if (!hasContent) return false;
-  return s === "spec_writing" || s === "building" || s === "review_ready";
+  return s === "spec_writing" || s === "spec_ready" || s === "building" || s === "review_ready" || s === "pending_review";
 }
 function showDomain(s: Status) { return s === "live"; }
 function showCms(s: Status, hasUrl: boolean) { return s === "live" && hasUrl; }
@@ -282,7 +322,7 @@ export function ProjectDetail() {
   const searchParams = useSearchParams();
   const [hashToken, setHashToken] = useState<string | null>(null);
   useEffect(() => {
-    const hash = window.location.hash.slice(1);
+    const hash = window.location.hash.slice(1).split('#')[0];
     if (hash) setHashToken(hash);
   }, []);
   const token = hashToken || searchParams.get("token");
@@ -468,7 +508,7 @@ export function ProjectDetail() {
       {/* ── Content sections (stage-aware order) ── */}
       <div className="mt-10 space-y-10">
 
-        {/* 1. Primary Action Card -- ALL statuses */}
+        {/* A. Primary Action Card */}
         <ProjectPrimaryAction
           project={project}
           token={token}
@@ -477,36 +517,15 @@ export function ProjectDetail() {
           actionLoading={actionLoading}
         />
 
-        {/* Spec section promoted above timeline when spec exists for early statuses */}
-        {(s === "intake_received" || s === "spec_writing") && hasSpecContent && (
-          <Section id="specification" label="Documentation" title="Specification">
-            <ProjectSpecReader specContent={project.spec_content!} />
-          </Section>
-        )}
-
-        {/* Stage indicator -- ALL statuses */}
-        <div className="flex justify-center">
-          <ProjectStageIndicator status={project.status} />
-        </div>
-
-        {/* 2. Preview / Site Access */}
-        {showPreview(s, hasPreviewUrl) && (
+        {/* B. Preview (THE PRODUCT, most prominent when available) */}
+        {showPreview(hasPreviewUrl) && (
           <Section id="preview" label="Deliverable" title={s === "live" ? "Your Website" : "Preview"}>
-            {previewUrl ? (
-              <PreviewFrame url={previewUrl} tall={s === "review_ready"} />
-            ) : (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-border/40 bg-muted/20 py-16 text-center">
-                <svg className="mb-4 h-8 w-8 text-muted-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
-                </svg>
-                <p className="text-sm text-muted-foreground">Preview will appear when your site build is ready</p>
-              </div>
-            )}
+            <PreviewFrame url={previewUrl!} tall />
           </Section>
         )}
 
-        {/* 2b. Content Editor -- when preview exists and review phase */}
-        {previewUrl && (s === "review_ready" || s === "building") && (
+        {/* C. Content Editor (below preview when available) */}
+        {previewUrl && (s === "review_ready" || s === "pending_review" || s === "building") && (
           <Section label="Content" title="Edit Content">
             <ProjectContentEditor
               slug={project.company_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}
@@ -515,7 +534,7 @@ export function ProjectDetail() {
           </Section>
         )}
 
-        {/* 3. Before / After */}
+        {/* D. Before / After */}
         {showBeforeAfter(s, hasOriginalScreenshot, hasPreviewUrl) && (
           <Section label="Comparison" title="Before / After">
             <ProjectBeforeAfter
@@ -525,25 +544,37 @@ export function ProjectDetail() {
           </Section>
         )}
 
-        {/* 4. Delivery Timeline (stage indicator replaces the full timeline for non-live) */}
-        {/* The compact stage indicator above serves this role. No full timeline shown. */}
+        {/* E. Progress Timeline (compact, always visible) */}
+        <div className="flex justify-center">
+          <ProjectStageIndicator status={project.status} />
+        </div>
 
-        {/* 5. Specification (only if not already promoted above) */}
-        {showSpec(s, hasSpecContent) && s !== "intake_received" && s !== "spec_writing" && (
-          <Section id="specification" label="Documentation" title="Specification">
+        {/* F. Specification */}
+        {showSpec(s, hasSpecContent) && (
+          <CollapsibleSection id="specification" label="Documentation" title="Specification">
             <ProjectSpecReader specContent={project.spec_content!} />
-          </Section>
+          </CollapsibleSection>
         )}
 
-        {/* 6. Messages -- ALL statuses */}
-        <Section label="Communication" title="Messages">
+        {/* G. Messages (collapsible, starts collapsed if empty) */}
+        <CollapsibleSection
+          label="Communication"
+          title="Messages"
+          defaultOpen={(project.messages || []).length > 0}
+        >
           <MessageThread
             messages={project.messages || []}
             onSend={handleSendMessage}
           />
-        </Section>
+        </CollapsibleSection>
 
-        {/* 7. Domain -- live only */}
+        {/* H. Activity Log (collapsible, starts collapsed) */}
+        <CollapsibleSection label="History" title="Activity" defaultOpen={false}>
+          <ProjectActivityFeed token={token} createdAt={project.created_at} />
+        </CollapsibleSection>
+
+        {/* ── Live-only sections ── */}
+
         {showDomain(s) && (
           <Section label="Infrastructure" title="Domain">
             {(() => {
@@ -598,14 +629,12 @@ export function ProjectDetail() {
           </Section>
         )}
 
-        {/* 7b. Analytics -- live only */}
         {s === "live" && (
           <Section label="Performance" title="Analytics">
             <ProjectAnalyticsSummary token={token} />
           </Section>
         )}
 
-        {/* 8. CMS -- live only */}
         {showCms(s, hasSanityUrl) && (
           <Section label="Setup" title="CMS">
             <ProjectCmsOnboarding
@@ -614,7 +643,6 @@ export function ProjectDetail() {
           </Section>
         )}
 
-        {/* 9. What's Next upsell -- live only */}
         {showUpsell(s) && (
           <Section label="Opportunity" title="What&apos;s Next?">
             <div className="grid gap-3 sm:grid-cols-3">
@@ -651,19 +679,12 @@ export function ProjectDetail() {
           </Section>
         )}
 
-        {/* 10. Contract -- live only */}
         {s === "live" && (
           <Section label="Legal" title="Contract">
             <ProjectContractViewer token={token} />
           </Section>
         )}
 
-        {/* 11. Activity -- ALL statuses */}
-        <Section label="History" title="Activity">
-          <ProjectActivityFeed token={token} createdAt={project.created_at} />
-        </Section>
-
-        {/* 12. Deliverables -- live only */}
         {showDeliverables(s, hasDeliverableUrls) && (
           <Section label="Files" title="Deliverables">
             <ul className="space-y-3">

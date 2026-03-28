@@ -1,22 +1,36 @@
 const STAGES = [
   { key: "intake_received", label: "Received", subtitle: "Project received" },
-  { key: "spec_writing", label: "Scoping", subtitle: "Analyzing your website and writing specification (~5 min)" },
-  { key: "building", label: "Building", subtitle: "Generating your new website (~2 min)" },
-  { key: "review_ready", label: "Review", subtitle: "Preview ready for your feedback" },
+  { key: "spec_writing", label: "Scoping", subtitle: "Analyzing your website (~5 min)" },
+  { key: "building", label: "Building", subtitle: "Generating your website (~2 min)" },
+  { key: "review", label: "Review", subtitle: "Preview ready for feedback" },
   { key: "live", label: "Delivered", subtitle: "Website is live" },
 ] as const;
+
+/* Map actual API statuses to the display stage they belong to */
+const STATUS_TO_STAGE: Record<string, string> = {
+  intake_received: "intake_received",
+  spec_writing: "spec_writing",
+  spec_ready: "spec_writing",
+  building: "building",
+  pending_review: "review",
+  review_ready: "review",
+  approved: "live",
+  revising: "building",
+  live: "live",
+};
 
 const stageColors: Record<string, string> = {
   intake_received: "bg-muted-foreground/60",
   spec_writing: "bg-amber-500",
   building: "bg-blue-500",
-  review_ready: "bg-primary",
+  review: "bg-primary",
   live: "bg-emerald-500",
 };
 
 export function ProjectStageIndicator({ status }: { status: string }) {
-  const currentIdx = STAGES.findIndex((s) => s.key === status);
-  const dotColor = stageColors[status] || "bg-muted-foreground/60";
+  const mappedStage = STATUS_TO_STAGE[status] || "intake_received";
+  const currentIdx = STAGES.findIndex((s) => s.key === mappedStage);
+  const dotColor = stageColors[mappedStage] || "bg-muted-foreground/60";
 
   return (
     <div className="flex items-center gap-1.5">

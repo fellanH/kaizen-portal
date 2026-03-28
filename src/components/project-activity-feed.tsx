@@ -23,12 +23,16 @@ const ACTOR_LABELS: Record<string, string> = {
 /* Map internal "Status changed from X to Y" to client-friendly messages */
 const STATUS_TRANSITION_MESSAGES: Record<string, string> = {
   "intake_received->spec_writing": "We are reviewing your project",
+  "intake_received->spec_ready": "Your project specification is ready",
   "spec_writing->spec_ready": "Your project specification is ready",
   "spec_ready->building": "Building your website",
-  "building->pending_review": "Your preview is ready for our review",
+  "building->pending_review": "Your website preview is being reviewed",
   "pending_review->review_ready": "Your website preview is ready for your review",
   "review_ready->approved": "You approved the preview",
   "approved->live": "Your website is live",
+  "revising->building": "Building updated preview",
+  "revising->pending_review": "Updated preview is being reviewed",
+  "revising->review_ready": "Updated preview is ready for your review",
 };
 
 function friendlyDescription(description: string): string {
@@ -37,8 +41,9 @@ function friendlyDescription(description: string): string {
   if (match) {
     const key = `${match[1]}->${match[2]}`;
     if (STATUS_TRANSITION_MESSAGES[key]) return STATUS_TRANSITION_MESSAGES[key];
-    // Any -> revising
     if (match[2] === "revising") return "Revisions in progress";
+    // Fallback: never show internal status names to clients
+    return "Project status updated";
   }
   return description;
 }
