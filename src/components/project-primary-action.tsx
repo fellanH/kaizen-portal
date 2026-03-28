@@ -20,48 +20,37 @@ interface PrimaryActionProps {
   actionLoading: boolean;
 }
 
-const cardStyle: Record<
-  string,
-  { accent: string; border: string; bg: string }
-> = {
+const cardStyle: Record<string, { border: string; bg: string }> = {
   intake_received: {
-    accent: "border-l-muted-foreground/40",
-    border: "border-border/60",
+    border: "border-border",
     bg: "bg-muted/20",
   },
   spec_writing: {
-    accent: "border-l-amber-500",
-    border: "border-amber-500/20",
+    border: "border-border",
     bg: "bg-amber-500/[0.04]",
   },
   building: {
-    accent: "border-l-blue-500",
-    border: "border-blue-500/20",
+    border: "border-border",
     bg: "bg-blue-500/[0.04]",
   },
   pending_review: {
-    accent: "border-l-blue-500",
-    border: "border-blue-500/20",
+    border: "border-border",
     bg: "bg-blue-500/[0.04]",
   },
   review_ready: {
-    accent: "border-l-primary",
-    border: "border-primary/20",
+    border: "border-border",
     bg: "bg-primary/[0.04]",
   },
   approved: {
-    accent: "border-l-emerald-500",
-    border: "border-emerald-500/20",
+    border: "border-border",
     bg: "bg-emerald-500/[0.04]",
   },
   revising: {
-    accent: "border-l-amber-500",
-    border: "border-amber-500/20",
+    border: "border-border",
     bg: "bg-amber-500/[0.04]",
   },
   live: {
-    accent: "border-l-emerald-500",
-    border: "border-emerald-500/20",
+    border: "border-border",
     bg: "bg-emerald-500/[0.04]",
   },
 };
@@ -156,7 +145,7 @@ export function ProjectPrimaryAction({
   return (
     <>
       <div
-        className={`overflow-hidden rounded-xl border ${style.border} ${style.bg} border-l-4 ${style.accent}`}
+        className={`overflow-hidden rounded-lg border ${style.border} ${style.bg}`}
       >
         <div className="p-5 sm:p-6">
           <p className="text-sm font-medium text-foreground">{content.heading}</p>
