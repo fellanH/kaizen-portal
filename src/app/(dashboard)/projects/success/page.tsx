@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -8,7 +8,7 @@ import { useProjects } from "@/lib/projects-context";
 import { slugify } from "@/lib/slugify";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
-export default function ProjectSuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { refresh } = useProjects();
@@ -38,6 +38,7 @@ export default function ProjectSuccessPage() {
       })
       .catch(() => {
         setStatus("error");
+        refresh();
       });
 
     return () => clearTimeout(redirectTimer);
@@ -72,7 +73,7 @@ export default function ProjectSuccessPage() {
               Payment confirmed!
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-[1.7] text-muted-foreground">
-              Setting up {company ? `your project for ${company}` : "your project"}... You'll be redirected in a moment.
+              Setting up {company ? `your project for ${company}` : "your project"}... You&apos;ll be redirected in a moment.
             </p>
             <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -109,5 +110,19 @@ export default function ProjectSuccessPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProjectSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-24">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      }
+    >
+      <SuccessContent />
+    </Suspense>
   );
 }
