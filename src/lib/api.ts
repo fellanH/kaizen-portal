@@ -375,10 +375,21 @@ export const api = {
     }
   },
 
-  createCheckoutSession(data: { company: string; url: string; tier: string }) {
-    return request<{ url: string }>("/checkout", {
+  submitProject(data: {
+    company: string;
+    email: string;
+    url?: string;
+    tier: string;
+  }) {
+    return request<{ ok: boolean; token?: string }>("/submit", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        ...data,
+        name: data.email.split("@")[0],
+        type: "website",
+        description: "",
+        timeline: "asap",
+      }),
     });
   },
 

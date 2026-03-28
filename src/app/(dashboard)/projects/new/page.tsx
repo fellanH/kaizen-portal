@@ -64,18 +64,31 @@ export default function NewProjectPage() {
 
   const selectedTier = TIERS.find((t) => t.value === tier)!;
 
+  const PAYMENT_LINKS: Record<string, string> = {
+    starter: "https://buy.stripe.com/test_7sYfZjfix3hQfD859Z8N200",
+    professional: "https://buy.stripe.com/test_7sY5kF0nDbOmdv061R8N201",
+    premium: "https://buy.stripe.com/test_fZu3cxb2h9Ge8aG4XN8N202",
+  };
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!company.trim()) return;
+    if (!company.trim() || !email) return;
     setSubmitting(true);
     setError("");
     try {
-      const { url: stripeUrl } = await api.createCheckoutSession({
+      const result = await api.submitProject({
         company: company.trim(),
-        url: url.trim(),
+        email,
+        url: url.trim() || undefined,
         tier,
       });
-      window.location.href = stripeUrl;
+      const token = result.token;
+      const paymentUrl = PAYMENT_LINKS[tier];
+      if (!paymentUrl || !token) {
+        throw new Error("Missing payment link or token");
+      }
+      const redirectUrl = `${paymentUrl}?prefilled_email=${encodeURIComponent(email)}&client_reference_id=${encodeURIComponent(token)}`;
+      window.location.href = redirectUrl;
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);

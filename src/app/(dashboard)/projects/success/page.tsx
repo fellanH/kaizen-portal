@@ -19,7 +19,7 @@ function SuccessContent() {
 
   useEffect(() => {
     if (!sessionId) {
-      setStatus("error");
+      router.replace("/projects");
       return;
     }
 
