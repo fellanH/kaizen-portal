@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 import { ArrowLeft, ArrowRight, CheckCircle2, Check } from "lucide-react";
 
 const STRIPE_LINKS: Record<string, string> = {
@@ -70,10 +71,12 @@ export default function NewProjectPage() {
   const prefilledCompany = searchParams.get("company") || "";
   const prefilledType = searchParams.get("type") || "";
   const isUpsell = !!prefilledCompany;
+  const isAuthenticated = !!email;
 
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const [tier, setTier] = useState(searchParams.get("tier") || "starter");
   const [company, setCompany] = useState(prefilledCompany);
@@ -88,15 +91,34 @@ export default function NewProjectPage() {
   async function handlePay() {
     if (!company.trim()) return;
     setSubmitting(true);
+    setError("");
     try {
+      if (isAuthenticated) {
+        // Authenticated: submit project via API, then open Stripe
+        const result = await api.submitProject({
+          company: company.trim(),
+          name: email.split("@")[0],
+          email,
+          url: url.trim() || undefined,
+          type,
+          tier,
+          description: description.trim(),
+          timeline: selectedTier.timeline,
+        });
+        if (!result.ok) {
+          setError("Failed to create project. Please try again.");
+          return;
+        }
+      }
       const stripeUrl = new URL(STRIPE_LINKS[tier]);
       if (email) {
         stripeUrl.searchParams.set("prefilled_email", email);
       }
       stripeUrl.searchParams.set("client_reference_id", company.trim());
-
       window.open(stripeUrl.toString(), "_blank");
       setSubmitted(true);
+    } catch {
+      setError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -358,60 +380,69 @@ export default function NewProjectPage() {
               />
             </div>
 
-            {/* Project type */}
-            <div className="space-y-3">
-              <label className="text-xs font-medium text-muted-foreground">
-                Project type
-              </label>
-              <div className="space-y-2">
-                {PROJECT_TYPES.map((pt) => (
-                  <label
-                    key={pt.value}
-                    className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-all duration-200 ${
-                      type === pt.value
-                        ? "border-primary/40 bg-primary/[0.04] text-foreground"
-                        : "border-border/60 text-muted-foreground hover:border-border hover:text-foreground"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="type"
-                      value={pt.value}
-                      checked={type === pt.value}
-                      onChange={(e) => setType(e.target.value)}
-                      className="sr-only"
-                    />
-                    <span
-                      className={`h-2 w-2 rounded-full transition-colors duration-200 ${
+            {/* Project type -- only shown for unauthenticated users */}
+            {!isAuthenticated && (
+              <div className="space-y-3">
+                <label className="text-xs font-medium text-muted-foreground">
+                  Project type
+                </label>
+                <div className="space-y-2">
+                  {PROJECT_TYPES.map((pt) => (
+                    <label
+                      key={pt.value}
+                      className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-all duration-200 ${
                         type === pt.value
-                          ? "bg-primary"
-                          : "bg-muted-foreground/30"
+                          ? "border-primary/40 bg-primary/[0.04] text-foreground"
+                          : "border-border/60 text-muted-foreground hover:border-border hover:text-foreground"
                       }`}
-                    />
-                    {pt.label}
-                  </label>
-                ))}
+                    >
+                      <input
+                        type="radio"
+                        name="type"
+                        value={pt.value}
+                        checked={type === pt.value}
+                        onChange={(e) => setType(e.target.value)}
+                        className="sr-only"
+                      />
+                      <span
+                        className={`h-2 w-2 rounded-full transition-colors duration-200 ${
+                          type === pt.value
+                            ? "bg-primary"
+                            : "bg-muted-foreground/30"
+                        }`}
+                      />
+                      {pt.label}
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Description */}
-            <div className="space-y-2">
-              <label
-                className="text-xs font-medium text-muted-foreground"
-                htmlFor="description"
-              >
-                What does your business do? What are you hoping to achieve?
-              </label>
-              <textarea
-                id="description"
-                rows={4}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Tell us about your business and what you're looking for"
-                className="w-full resize-none border-0 border-b border-border/60 bg-transparent px-0 py-2.5 text-sm text-foreground placeholder-muted-foreground/40 outline-none transition-colors duration-300 focus:border-primary/60"
-                style={{ fontFamily: "var(--font-aspekta)" }}
-              />
-            </div>
+            {/* Description -- only shown for unauthenticated users */}
+            {!isAuthenticated && (
+              <div className="space-y-2">
+                <label
+                  className="text-xs font-medium text-muted-foreground"
+                  htmlFor="description"
+                >
+                  What does your business do? What are you hoping to achieve?
+                </label>
+                <textarea
+                  id="description"
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Tell us about your business and what you're looking for"
+                  className="w-full resize-none border-0 border-b border-border/60 bg-transparent px-0 py-2.5 text-sm text-foreground placeholder-muted-foreground/40 outline-none transition-colors duration-300 focus:border-primary/60"
+                  style={{ fontFamily: "var(--font-aspekta)" }}
+                />
+              </div>
+            )}
+
+            {/* Error message */}
+            {error && (
+              <p className="text-xs text-red-500">{error}</p>
+            )}
 
             {/* Pay button */}
             <div className="border-t border-border/50 pt-6">
