@@ -17,6 +17,7 @@ import { ProjectStageIndicator } from "@/components/project-stage-indicator";
 import { ProjectLaunchFlow } from "@/components/project-launch-flow";
 import { ProjectDomainCheck } from "@/components/project-domain-check";
 import { ProjectAnalyticsSummary } from "@/components/project-analytics-summary";
+import { ProjectContentEditor } from "@/components/project-content-editor";
 
 /* ── Status config with semantic colors ── */
 const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
@@ -492,6 +493,16 @@ export function ProjectDetail() {
                 <p className="text-sm text-muted-foreground">Preview will appear when your site build is ready</p>
               </div>
             )}
+          </Section>
+        )}
+
+        {/* 2b. Content Editor -- when preview exists and review phase */}
+        {previewUrl && (s === "review_ready" || s === "building") && (
+          <Section label="Content" title="Edit Content">
+            <ProjectContentEditor
+              slug={project.company_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}
+              token={token}
+            />
           </Section>
         )}
 
