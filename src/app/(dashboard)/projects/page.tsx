@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, Plus, PlusCircle } from "lucide-react";
-import { type Project } from "@/lib/api";
+import { ExternalLink, Plus, PlusCircle, Trash2 } from "lucide-react";
+import { api, type Project } from "@/lib/api";
 import { useProjects } from "@/lib/projects-context";
+import { toast } from "sonner";
 import { slugify } from "@/lib/slugify";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -234,22 +235,38 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <span className="text-xs text-muted-foreground">
               {project.created_at ? `Started ${formatDate(project.created_at)}` : ""}
             </span>
-            {project.status === "live" && project.deliverables?.preview_url ? (
-              <a
-                href={project.deliverables.preview_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 transition-colors duration-200 hover:bg-emerald-500/20 dark:text-emerald-400"
+            <div className="flex items-center gap-2">
+              {project.status === "live" && project.deliverables?.preview_url ? (
+                <a
+                  href={project.deliverables.preview_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 transition-colors duration-200 hover:bg-emerald-500/20 dark:text-emerald-400"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Visit Site
+                </a>
+              ) : (
+                <span className="text-xs text-muted-foreground/60">
+                  {days === 0 ? "Today" : `${days}d ago`}
+                </span>
+              )}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!confirm(`Delete "${project.company_name}"? This cannot be undone.`)) return;
+                  api.deleteProject(project.token)
+                    .then(() => { toast.success("Project deleted"); window.location.reload(); })
+                    .catch(() => toast.error("Failed to delete project"));
+                }}
+                className="rounded p-1 text-muted-foreground/40 transition-colors hover:bg-red-50 hover:text-red-500"
+                title="Delete project"
               >
-                <ExternalLink className="h-3 w-3" />
-                Visit Site
-              </a>
-            ) : (
-              <span className="text-xs text-muted-foreground/60">
-                {days === 0 ? "Today" : `${days}d ago`}
-              </span>
-            )}
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>

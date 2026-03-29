@@ -393,6 +393,19 @@ export const api = {
     });
   },
 
+  deleteProject(token: string) {
+    return request<{ ok: boolean }>(`/project/${token}`, {
+      method: "DELETE",
+    });
+  },
+
+  retryBuild(token: string) {
+    return request<{ ok: boolean }>(`/project/${token}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "spec_ready" }),
+    });
+  },
+
   getStripeSession(sessionId: string) {
     return fetch(`${API_BASE}/stripe-session/${encodeURIComponent(sessionId)}`)
       .then((res) => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { api, type Project } from "@/lib/api";
+import { toast } from "sonner";
 
 interface ProgressPhase {
   key: string;
@@ -182,11 +183,26 @@ export function BuildProgress({ token }: { token: string }) {
           </div>
           <div className="pb-2">
             <p className="text-sm font-medium text-red-600">Build failed</p>
-            {completedPhases.has("build_failed") && (
+            {completedPhases.has("build_failed") ? (
               <p className="mt-1 text-xs text-red-500/70">
                 {String(completedPhases.get("build_failed")?.error || "Unknown error").substring(0, 200)}
               </p>
-            )}
+            ) : null}
+            <button
+              onClick={async () => {
+                try {
+                  await api.retryBuild(token);
+                  toast.success("Build restarted");
+                  fetchProject();
+                } catch {
+                  toast.error("Failed to retry build");
+                }
+              }}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              Retry Build
+            </button>
           </div>
         </div>
       )}
