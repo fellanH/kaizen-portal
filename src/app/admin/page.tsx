@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { AdminProjectActions } from "@/components/admin-project-actions";
@@ -123,7 +124,14 @@ export default async function AdminPage() {
                   key={p.token}
                   className="border-b border-foreground/5 transition-colors hover:bg-foreground/[0.02]"
                 >
-                  <td className="px-4 py-3 text-foreground">{p.company || "Untitled"}</td>
+                  <td className="px-4 py-3 text-foreground">
+                    <Link
+                      href={`/admin/projects/${p.token}`}
+                      className="hover:text-primary transition-colors hover:underline"
+                    >
+                      {p.company || "Untitled"}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-foreground/60">{p.email}</td>
                   <td className="px-4 py-3">{statusBadge(p.status)}</td>
                   <td className="px-4 py-3 text-foreground/60 capitalize">{p.tier}</td>

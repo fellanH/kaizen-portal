@@ -42,6 +42,12 @@ export default function AdminLayout({
           >
             Projects
           </Link>
+          <Link
+            href="/admin/sections"
+            className="rounded-md px-3 py-2 text-sm text-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
+          >
+            Sections
+          </Link>
         </nav>
       </aside>
 
