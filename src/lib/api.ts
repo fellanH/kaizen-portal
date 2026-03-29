@@ -92,6 +92,7 @@ interface ProjectRaw {
   updated_at: string;
   spec_content?: string;
   messages?: MessageRaw[];
+  preview_url?: string;
   deliverables?: {
     preview_url?: string;
     urls?: { label: string; url: string }[];
@@ -123,9 +124,14 @@ function normalizeMessage(raw: MessageRaw, index: number): Message {
 
 /** Map API response to portal's expected shape */
 function normalizeProject(raw: ProjectRaw): Project {
-  const { company, name, email, messages, ...rest } = raw;
+  const { company, name, email, messages, preview_url, ...rest } = raw;
+  const deliverables = rest.deliverables ?? {};
+  if (preview_url && !deliverables.preview_url) {
+    deliverables.preview_url = preview_url;
+  }
   return {
     ...rest,
+    deliverables,
     company_name: company || "Untitled",
     contact_name: name || "",
     contact_email: email || "",
