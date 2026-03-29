@@ -57,8 +57,6 @@ export default function NewProjectPage() {
   const { email } = useAuth();
 
   const [tier, setTier] = useState(searchParams.get("tier") || "professional");
-  const [company, setCompany] = useState(searchParams.get("company") || "");
-  const [url, setUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -72,14 +70,14 @@ export default function NewProjectPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!company.trim() || !email) return;
+    if (!email) return;
+    const company = email.split("@")[0];
     setSubmitting(true);
     setError("");
     try {
       const result = await api.submitProject({
-        company: company.trim(),
+        company,
         email,
-        url: url.trim() || undefined,
         tier,
       });
       const token = result.token;
@@ -154,46 +152,6 @@ export default function NewProjectPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-10 space-y-10">
-        {/* Company + URL fields */}
-        <div className="kaizen-enter-2 mx-auto max-w-xl space-y-8">
-          <div className="space-y-2">
-            <label
-              className="text-xs font-medium text-muted-foreground"
-              htmlFor="company"
-            >
-              Company name <span className="text-primary">*</span>
-            </label>
-            <input
-              id="company"
-              type="text"
-              required
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              placeholder="Your company name"
-              className="w-full border-0 border-b border-border/60 bg-transparent px-0 py-2.5 text-sm text-foreground placeholder-muted-foreground/40 outline-none transition-colors duration-300 focus:border-primary/60"
-              style={{ fontFamily: "var(--font-aspekta)" }}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label
-              className="text-xs font-medium text-muted-foreground"
-              htmlFor="url"
-            >
-              Current website URL
-            </label>
-            <input
-              id="url"
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="We'll use this as a starting point for your redesign"
-              className="w-full border-0 border-b border-border/60 bg-transparent px-0 py-2.5 text-sm text-foreground placeholder-muted-foreground/40 outline-none transition-colors duration-300 focus:border-primary/60"
-              style={{ fontFamily: "var(--font-aspekta)" }}
-            />
-          </div>
-        </div>
-
         {/* Tier selector */}
         <div className="kaizen-enter-2">
           <p className="mb-4 text-xs font-medium text-muted-foreground">
@@ -286,7 +244,7 @@ export default function NewProjectPage() {
             </Link>
             <button
               type="submit"
-              disabled={submitting || !company.trim()}
+              disabled={submitting}
               className="inline-flex items-center gap-3 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-primary/90 disabled:opacity-30"
             >
               {submitting ? (
