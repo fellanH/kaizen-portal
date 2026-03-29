@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { api, type Project, type Message } from "@/lib/api";
 import { ExternalLink, Monitor, Tablet, Smartphone, ChevronDown, Clock } from "lucide-react";
@@ -264,6 +264,12 @@ export function ProjectDetail({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [launchDismissed, setLaunchDismissed] = useState(true);
+  const [buildProgressActive, setBuildProgressActive] = useState(false);
+  const buildProgressActiveRef = useRef(false);
+  const handleBuildActiveChange = useCallback((active: boolean) => {
+    setBuildProgressActive(active);
+    buildProgressActiveRef.current = active;
+  }, []);
 
   const fetchProject = useCallback(() => {
     if (!token) return;
@@ -286,7 +292,7 @@ export function ProjectDetail({ token }: { token: string }) {
     function startPolling() {
       if (interval) return;
       interval = setInterval(() => {
-        if (!document.hidden) fetchProject();
+        if (!document.hidden && !buildProgressActiveRef.current) fetchProject();
       }, 15000);
     }
 
@@ -461,7 +467,7 @@ export function ProjectDetail({ token }: { token: string }) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <BuildProgress token={token} />
+                <BuildProgress token={token} onActiveChange={handleBuildActiveChange} />
               </CardContent>
             </Card>
           )}

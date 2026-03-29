@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { api, type Project } from "@/lib/api";
 import { toast } from "sonner";
+import { RefreshCw, Mail } from "lucide-react";
 
 interface ProgressPhase {
   key: string;
@@ -40,25 +41,89 @@ function getCompletedPhases(project: Project): Map<string, Record<string, unknow
   return completed;
 }
 
-export function BuildProgress({ token }: { token: string }) {
+const MAX_POLLS = 200;
+const STALE_THRESHOLD = 100;
+
+export function BuildProgress({ token, onActiveChange }: { token: string; onActiveChange?: (active: boolean) => void }) {
   const [project, setProject] = useState<Project | null>(null);
   const [completedPhases, setCompletedPhases] = useState<Map<string, Record<string, unknown>>>(new Map());
+  const [timedOut, setTimedOut] = useState(false);
+  const pollCountRef = useRef(0);
+  const staleCountRef = useRef(0);
+  const lastStatusRef = useRef<string>("");
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
 
   const fetchProject = useCallback(async () => {
     try {
       const p = await api.getProject(token);
       setProject(p);
       setCompletedPhases(getCompletedPhases(p));
+
+      // Track stale status (no change)
+      if (p.status === lastStatusRef.current) {
+        staleCountRef.current++;
+      } else {
+        staleCountRef.current = 0;
+        lastStatusRef.current = p.status;
+      }
+
+      pollCountRef.current++;
+
+      // Timeout: max polls or stale too long
+      if (pollCountRef.current >= MAX_POLLS || staleCountRef.current >= STALE_THRESHOLD) {
+        setTimedOut(true);
+        stopPolling();
+      }
     } catch {
       // Silent retry on next poll
     }
-  }, [token]);
+  }, [token, stopPolling]);
+
+  const resetAndResume = useCallback(() => {
+    pollCountRef.current = 0;
+    staleCountRef.current = 0;
+    setTimedOut(false);
+    fetchProject();
+    if (!intervalRef.current) {
+      intervalRef.current = setInterval(fetchProject, 3000);
+    }
+  }, [fetchProject]);
 
   useEffect(() => {
     fetchProject();
-    const interval = setInterval(fetchProject, 3000);
-    return () => clearInterval(interval);
-  }, [fetchProject]);
+    intervalRef.current = setInterval(fetchProject, 3000);
+
+    // Visibility guard: pause when tab hidden, resume when visible
+    function handleVisibility() {
+      if (document.hidden) {
+        stopPolling();
+      } else if (!timedOut) {
+        if (!intervalRef.current) {
+          fetchProject();
+          intervalRef.current = setInterval(fetchProject, 3000);
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [fetchProject, stopPolling, timedOut]);
+
+  // Notify parent whether BuildProgress is actively polling a build
+  const isActive = project ? ["spec_ready", "building", "build_failed"].includes(project.status) : false;
+  useEffect(() => {
+    onActiveChange?.(isActive);
+  }, [isActive, onActiveChange]);
 
   if (!project) return null;
 
@@ -171,6 +236,37 @@ export function BuildProgress({ token }: { token: string }) {
               View Your Site
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
             </a>
+          </div>
+        </div>
+      )}
+
+      {/* Timeout state */}
+      {timedOut && isBuilding && (
+        <div className="flex gap-4">
+          <div className="flex flex-col items-center">
+            <div className="mt-1 h-3 w-3 rounded-full border-2 border-amber-500 bg-amber-500" />
+          </div>
+          <div className="pb-2">
+            <p className="text-sm font-medium text-amber-600">Build is taking longer than expected</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              This can happen with complex websites. You can wait or contact us for help.
+            </p>
+            <div className="mt-3 flex items-center gap-3">
+              <button
+                onClick={resetAndResume}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Refresh
+              </button>
+              <a
+                href="mailto:hello@hi-kaizen.com"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+              >
+                <Mail className="h-3 w-3" />
+                Contact support
+              </a>
+            </div>
           </div>
         </div>
       )}

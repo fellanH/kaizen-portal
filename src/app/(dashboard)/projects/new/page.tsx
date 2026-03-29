@@ -89,8 +89,35 @@ export default function NewProjectPage() {
       }
       const redirectUrl = `${paymentUrl}?prefilled_email=${encodeURIComponent(email)}&client_reference_id=${encodeURIComponent(token)}`;
       window.location.href = redirectUrl;
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+
+      // Session expired (API client throws "Unauthorized" on 401)
+      if (msg === "Unauthorized") {
+        localStorage.removeItem("kaizen_token");
+        window.location.href = "/login";
+        return;
+      }
+
+      // Validation error (422)
+      if (msg.startsWith("API error 422")) {
+        const body = msg.replace(/^API error 422:\s*/, "");
+        try {
+          const parsed = JSON.parse(body);
+          setError(parsed?.error || "Please check your input and try again.");
+        } catch {
+          setError("Please check your input and try again.");
+        }
+        setSubmitting(false);
+        return;
+      }
+
+      // Network error
+      if (err instanceof TypeError && msg.includes("fetch")) {
+        setError("Connection lost. Check your internet and try again.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
       setSubmitting(false);
     }
   }

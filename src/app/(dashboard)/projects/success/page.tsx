@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { api } from "@/lib/api";
 import { useProjects } from "@/lib/projects-context";
 import { slugify } from "@/lib/slugify";
@@ -14,8 +13,9 @@ function SuccessContent() {
   const { refresh } = useProjects();
   const sessionId = searchParams.get("session_id");
 
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "success" | "retrying" | "fallback">("loading");
   const [company, setCompany] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!sessionId) {
@@ -24,24 +24,47 @@ function SuccessContent() {
     }
 
     let redirectTimer: ReturnType<typeof setTimeout>;
+    let retryTimer: ReturnType<typeof setTimeout>;
+    let cancelled = false;
+    const MAX_RETRIES = 10;
 
-    api
-      .getStripeSession(sessionId)
-      .then((data) => {
-        setCompany(data.company);
-        setStatus("success");
-        refresh();
-        const slug = slugify(data.company);
-        redirectTimer = setTimeout(() => {
-          router.push(`/projects/${slug}`);
-        }, 2000);
-      })
-      .catch(() => {
-        setStatus("error");
-        refresh();
-      });
+    function attempt(count: number) {
+      if (cancelled) return;
+      api
+        .getStripeSession(sessionId!)
+        .then((data) => {
+          if (cancelled) return;
+          setCompany(data.company);
+          setStatus("success");
+          refresh();
+          const slug = slugify(data.company);
+          redirectTimer = setTimeout(() => {
+            router.push(`/projects/${slug}`);
+          }, 2000);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          if (count < MAX_RETRIES) {
+            setStatus("retrying");
+            setRetryCount(count + 1);
+            retryTimer = setTimeout(() => attempt(count + 1), 3000);
+          } else {
+            setStatus("fallback");
+            refresh();
+            redirectTimer = setTimeout(() => {
+              router.push("/projects");
+            }, 2000);
+          }
+        });
+    }
 
-    return () => clearTimeout(redirectTimer);
+    attempt(0);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(redirectTimer);
+      clearTimeout(retryTimer);
+    };
   }, [sessionId, refresh, router]);
 
   return (
@@ -82,30 +105,37 @@ function SuccessContent() {
           </>
         )}
 
-        {status === "error" && (
+        {status === "retrying" && (
           <>
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10">
-              <CheckCircle2 className="h-7 w-7 text-emerald-500" />
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+              <Loader2 className="h-7 w-7 animate-spin text-primary" />
             </div>
             <h1
               className="text-xl font-light tracking-tight text-foreground"
               style={{ letterSpacing: "-0.02em" }}
             >
-              Payment received
+              Processing your payment...
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-[1.7] text-muted-foreground">
-              Your project will appear in your dashboard shortly. It may take a
-              moment for everything to sync.
+              This usually takes a few seconds. Attempt {retryCount} of 10.
             </p>
-            <Link
-              href="/projects"
-              className="mt-8 inline-flex items-center gap-2 text-sm text-foreground transition-colors duration-200"
+          </>
+        )}
+
+        {status === "fallback" && (
+          <>
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+            </div>
+            <h1
+              className="text-xl font-light tracking-tight text-foreground"
+              style={{ letterSpacing: "-0.02em" }}
             >
-              <span className="relative">
-                Go to projects
-                <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary/40" />
-              </span>
-            </Link>
+              Payment received, redirecting...
+            </h1>
+            <p className="mt-3 max-w-sm text-sm leading-[1.7] text-muted-foreground">
+              Your project will appear in your dashboard shortly.
+            </p>
           </>
         )}
       </div>
