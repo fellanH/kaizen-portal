@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { redirect } from "next/navigation";
 
-const ADMIN_EMAIL = "fehellstrom@gmail.com";
+const ADMIN_EMAILS = ["fehellstrom@gmail.com", "felix@stormfors.com"];
 
 export default function AdminLayout({
   children,
@@ -21,7 +21,7 @@ export default function AdminLayout({
     );
   }
 
-  if (email !== ADMIN_EMAIL) {
+  if (!email || !ADMIN_EMAILS.includes(email)) {
     redirect("/login");
   }
 
