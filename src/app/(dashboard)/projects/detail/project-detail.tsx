@@ -16,6 +16,7 @@ import { ProjectLaunchFlow } from "@/components/project-launch-flow";
 import { ProjectDomainCheck } from "@/components/project-domain-check";
 import { ProjectAnalyticsSummary } from "@/components/project-analytics-summary";
 import { ProjectContentEditor } from "@/components/project-content-editor";
+import { BuildProgress } from "@/components/build-progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   approved: { label: "Approved", className: "status-emerald" },
   revising: { label: "Revising", className: "status-amber" },
   live: { label: "Delivered", className: "status-emerald" },
+  build_failed: { label: "Failed", className: "status-red" },
 };
 
 const tierLabels: Record<string, string> = {
@@ -254,7 +256,7 @@ function DetailSkeleton() {
 }
 
 /* ── Types ── */
-type Status = "intake_received" | "spec_writing" | "spec_ready" | "building" | "pending_review" | "review_ready" | "approved" | "revising" | "live" | "failed";
+type Status = "intake_received" | "spec_writing" | "spec_ready" | "building" | "pending_review" | "review_ready" | "approved" | "revising" | "live" | "failed" | "build_failed";
 
 /* ── Main Component ── */
 export function ProjectDetail({ token }: { token: string }) {
@@ -389,7 +391,7 @@ export function ProjectDetail({ token }: { token: string }) {
   const hasDeliverableUrls = !!project.deliverables?.urls && project.deliverables.urls.length > 0;
   const messageCount = (project.messages || []).length;
 
-  const isEarlyStage = ["intake_received", "spec_writing", "spec_ready", "building"].includes(s);
+  const isEarlyStage = ["intake_received", "spec_writing", "spec_ready", "building", "build_failed"].includes(s);
   const isReviewStage = ["pending_review", "review_ready", "revising"].includes(s);
   const isLive = s === "live";
   const hasEditor = hasPreviewUrl && (s === "review_ready" || s === "pending_review" || s === "building");
@@ -450,6 +452,20 @@ export function ProjectDetail({ token }: { token: string }) {
       {/* Early stage: status card + project brief */}
       {isEarlyStage && (
         <div className="mt-8 space-y-6">
+          {/* Live pipeline progress */}
+          {["spec_ready", "building", "build_failed"].includes(s) && (
+            <Card className="border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground/60 uppercase tracking-wide">
+                  {s === "build_failed" ? "Build Status" : "Building Your Website"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BuildProgress token={token} />
+              </CardContent>
+            </Card>
+          )}
+
           {hasSpecContent && (
             <div>
               <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/60">
