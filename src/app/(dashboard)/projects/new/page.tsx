@@ -63,9 +63,15 @@ export default function NewProjectPage() {
   const selectedTier = TIERS.find((t) => t.value === tier)!;
 
   const PAYMENT_LINKS: Record<string, string> = {
-    starter: "https://buy.stripe.com/test_7sYfZjfix3hQfD889Z8N200",
-    professional: "https://buy.stripe.com/test_7sY5kF0nDbOmdv061R8N201",
-    premium: "https://buy.stripe.com/test_fZu3cxb2h9Ge8aG4XN8N202",
+    starter: process.env.NEXT_PUBLIC_STRIPE_TEST === "true"
+      ? "https://buy.stripe.com/test_00w4gB7Q55pY8aG1LB8N208"
+      : "https://buy.stripe.com/7sY5kF0nDbOmdv061R8N201",
+    professional: process.env.NEXT_PUBLIC_STRIPE_TEST === "true"
+      ? "https://buy.stripe.com/test_7sY6oJ6M16u2ez4ai78N209"
+      : "https://buy.stripe.com/fZu3cxb2h9Ge8aG4XN8N202",
+    premium: process.env.NEXT_PUBLIC_STRIPE_TEST === "true"
+      ? "https://buy.stripe.com/test_9B6fZj2vL19IfD8duj8N20a"
+      : "https://buy.stripe.com/8x228t5HX2dM9eK4XN8N203",
   };
 
   async function handleSubmit(e: React.FormEvent) {
