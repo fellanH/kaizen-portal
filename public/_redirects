@@ -1,0 +1,2 @@
+# Preserve old /projects/:slug URLs (redirect to detail page with slug as query param)
+/projects/:slug /projects/detail?slug=:slug 302
