@@ -188,7 +188,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
   return (
     <Link
-      href={`/project/${slugify(project.company_name)}`}
+      href={`/${slugify(project.company_name)}`}
       className="project-card-enter group block"
       style={{ animationDelay: `${index * 80}ms` }}
     >

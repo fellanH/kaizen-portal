@@ -103,7 +103,7 @@ export function AppSidebar() {
                     render={<Link href={item.href} />}
                     isActive={
                       item.href === "/projects"
-                        ? pathname === "/projects" || pathname.startsWith("/projects/") || pathname.startsWith("/project/")
+                        ? pathname === "/projects" || pathname.startsWith("/projects/") || (pathname !== "/" && pathname !== "/login" && pathname !== "/messages" && pathname !== "/account")
                         : pathname.startsWith(item.href)
                     }
                   >

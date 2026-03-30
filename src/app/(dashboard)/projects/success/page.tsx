@@ -39,7 +39,7 @@ function SuccessContent() {
           refresh();
           const slug = slugify(data.company);
           redirectTimer = setTimeout(() => {
-            router.push(`/project/${slug}`);
+            router.push(`/${slug}`);
           }, 2000);
         })
         .catch(() => {
