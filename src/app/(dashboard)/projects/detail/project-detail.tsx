@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api, type Project, type Message } from "@/lib/api";
-import { ExternalLink, Monitor, Tablet, Smartphone, ChevronDown, Clock } from "lucide-react";
+import { ExternalLink, Monitor, Tablet, Smartphone, ChevronDown, Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectBrief } from "@/components/project-brief";
 import { ProjectContractViewer } from "@/components/project-contract-viewer";
@@ -23,6 +24,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 /* ── Status config ── */
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -261,9 +273,11 @@ type Status = "intake_received" | "spec_writing" | "spec_ready" | "building" | "
 
 /* ── Main Component ── */
 export function ProjectDetail({ token }: { token: string }) {
+  const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [launchDismissed, setLaunchDismissed] = useState(true);
   const [buildProgressActive, setBuildProgressActive] = useState(false);
   const buildProgressActiveRef = useRef(false);
@@ -362,6 +376,19 @@ export function ProjectDetail({ token }: { token: string }) {
     } catch {
       toast.error("Failed to send message");
       throw new Error("send failed");
+    }
+  }
+
+  async function handleDelete() {
+    if (!token) return;
+    setDeleting(true);
+    try {
+      await api.deleteProject(token);
+      toast.success("Project deleted");
+      router.push("/projects");
+    } catch {
+      toast.error("Failed to delete project");
+      setDeleting(false);
     }
   }
 
@@ -736,6 +763,44 @@ export function ProjectDetail({ token }: { token: string }) {
           </Card>
         </div>
       )}
+
+      {/* ── Delete project (all stages) ── */}
+      <div className="mt-12 border-t border-border/40 pt-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-destructive">Delete project</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Permanently remove this project and all associated data.
+            </p>
+          </div>
+          <AlertDialog>
+            <AlertDialogTrigger
+              className="inline-flex items-center gap-2 rounded-md bg-destructive/10 px-3.5 py-2 text-sm font-medium text-destructive transition-colors duration-200 hover:bg-destructive/20"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete project?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete {project.company_name}? This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="bg-destructive text-white hover:bg-destructive/90"
+                >
+                  {deleting ? "Deleting..." : "Delete project"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
     </div>
   );
 }
