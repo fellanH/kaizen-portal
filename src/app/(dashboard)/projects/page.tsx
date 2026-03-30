@@ -14,8 +14,12 @@ import { slugify } from "@/lib/slugify";
 /* ── Pipeline stages in logical order ── */
 const PIPELINE_STAGES = [
   "intake_received",
+  "spec_ready",
   "spec_writing",
+  "style_guide_ready",
+  "generating",
   "building",
+  "preview_ready",
   "review_ready",
   "live",
 ] as const;
@@ -31,17 +35,41 @@ const statusConfig: Record<
     text: "text-muted-foreground",
     dot: "bg-muted-foreground/60",
   },
+  spec_ready: {
+    label: "Spec Ready",
+    bg: "status-neutral",
+    text: "text-muted-foreground",
+    dot: "bg-muted-foreground/60",
+  },
   spec_writing: {
     label: "Scoping",
     bg: "status-amber",
     text: "text-amber-600 dark:text-amber-400",
     dot: "bg-amber-500",
   },
+  style_guide_ready: {
+    label: "Style Guide Ready",
+    bg: "status-purple",
+    text: "text-purple-600 dark:text-purple-400",
+    dot: "bg-purple-500",
+  },
+  generating: {
+    label: "Generating",
+    bg: "status-blue",
+    text: "text-blue-600 dark:text-blue-400",
+    dot: "bg-blue-500",
+  },
   building: {
     label: "Building",
     bg: "status-blue",
     text: "text-blue-600 dark:text-blue-400",
     dot: "bg-blue-500",
+  },
+  preview_ready: {
+    label: "Preview Ready",
+    bg: "status-orange",
+    text: "text-primary",
+    dot: "bg-primary",
   },
   review_ready: {
     label: "Review Ready",
@@ -159,7 +187,7 @@ function PipelineProgress({ status }: { status: string }) {
           style={{
             width: `${progress}%`,
             transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-            backgroundColor: status === "live" ? "#22c55e" : status === "review_ready" ? "#e85325" : status === "building" ? "#3b82f6" : "#e85325",
+            backgroundColor: status === "live" ? "#22c55e" : (status === "review_ready" || status === "preview_ready") ? "#e85325" : (status === "building" || status === "generating") ? "#3b82f6" : status === "style_guide_ready" ? "#a855f7" : "#e85325",
             opacity: status === "live" ? 1 : 0.7,
           }}
         />
@@ -188,7 +216,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
   return (
     <Link
-      href={`/${slugify(project.company_name)}`}
+      href={`/project-detail?slug=${slugify(project.company_name)}`}
       className="project-card-enter group block"
       style={{ animationDelay: `${index * 80}ms` }}
     >

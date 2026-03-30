@@ -1,6 +1,3 @@
-# Dynamic project routes (redirect to detail page with slug as query param)
-# Put this at the end to avoid catching /login, /projects, etc.
-# Cloudflare Pages serves static files first, but _redirects can override.
-# Using a 200 rewrite would be cleaner but 302 is safer for debugging now.
-/project/:slug /project-detail?slug=:slug 302
-/:slug /project-detail?slug=:slug 302
+# Dynamic project routes
+/project/* /project-detail?slug=:splat 302
+

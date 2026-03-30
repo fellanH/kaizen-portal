@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -9,6 +10,8 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const isDev = process.env.NODE_ENV === "development";
+  const [devKey, setDevKey] = useState(() => (isDev ? api.getDevUserApiKey() || "" : ""));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,6 +26,15 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleDevBypass(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isDev) return;
+    const key = devKey.trim();
+    if (!key) return;
+    api.setDevUserApiKey(key);
+    window.location.href = "/projects";
   }
 
   return (
@@ -131,6 +143,42 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
+
+            {isDev && (
+              <div className="mt-14 w-full">
+                <div className="h-px w-full bg-foreground/10" />
+                <p className="mt-6 text-[0.6rem] font-medium uppercase tracking-[0.08em] text-foreground/35">
+                  Dev bypass
+                </p>
+                <p className="mt-2 text-sm leading-[1.7] text-foreground/45">
+                  Paste a user API key to authenticate locally via <span className="font-mono">X-API-Key</span>. This only
+                  works in development.
+                </p>
+
+                <form onSubmit={handleDevBypass} className="mt-6">
+                  <input
+                    type="password"
+                    placeholder="User API key"
+                    value={devKey}
+                    onChange={(e) => setDevKey(e.target.value)}
+                    className="w-full rounded-lg border border-foreground/15 bg-transparent px-4 py-3 text-sm text-foreground placeholder-foreground/25 outline-none transition-colors duration-300 focus:border-primary/60"
+                    style={{ fontFamily: "var(--font-aspekta)" }}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!devKey.trim()}
+                    className="mt-4 inline-flex items-center gap-3 text-sm text-foreground transition-all duration-200 disabled:opacity-30"
+                  >
+                    <span className="relative">
+                      Continue (dev)
+                      <span className="absolute inset-x-0 -bottom-0.5 h-px bg-primary transition-transform duration-300 origin-left scale-x-100 group-hover:scale-x-0" />
+                    </span>
+                  </button>
+                </form>
+              </div>
+            )}
           </>
         )}
 

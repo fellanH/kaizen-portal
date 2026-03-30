@@ -21,7 +21,102 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { ExternalLink, Trash2, Copy, Eye, EyeOff, RefreshCw, Key } from "lucide-react";
+
+/* ── API Keys ── */
+function ApiKeySection() {
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    api
+      .getApiKey()
+      .then((data) => setApiKey(data.apiKey))
+      .catch(() => toast.error("Failed to load API key"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleGenerate = async () => {
+    const confirmMsg = apiKey 
+      ? "Generating a new key will invalidate your current key. Any agents or CLI tools using the old key will stop working. Continue?" 
+      : "Generate a new API key for agent and CLI access?";
+    
+    if (!confirm(confirmMsg)) return;
+
+    setGenerating(true);
+    try {
+      const data = await api.generateApiKey();
+      setApiKey(data.apiKey);
+      setVisible(true);
+      toast.success("New API key generated");
+    } catch {
+      toast.error("Failed to generate API key");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCopy = () => {
+    if (!apiKey) return;
+    navigator.clipboard.writeText(apiKey);
+    toast.success("API key copied to clipboard");
+  };
+
+  if (loading) {
+    return <div className="h-10 w-full ds-skeleton rounded-lg" />;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <input
+            type={visible ? "text" : "password"}
+            value={apiKey || "••••••••••••••••••••••••••••••••"}
+            readOnly
+            className="w-full rounded-lg border border-border/40 bg-muted/30 px-4 py-2.5 text-xs font-mono text-foreground outline-none transition-colors focus:border-primary/40 sm:text-sm"
+          />
+          <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+            {apiKey && (
+              <>
+                <button
+                  onClick={() => setVisible(!visible)}
+                  className="rounded p-1.5 text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+                  title={visible ? "Hide" : "Show"}
+                >
+                  {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                </button>
+                <button
+                  onClick={handleCopy}
+                  className="rounded p-1.5 text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+                  title="Copy"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleGenerate}
+          disabled={generating}
+          className="h-10 shrink-0 gap-2 border-border/60 font-light hover:bg-muted"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${generating ? "animate-spin" : ""}`} />
+          {apiKey ? "Rotate Key" : "Generate Key"}
+        </Button>
+      </div>
+      <p className="text-xs leading-relaxed text-muted-foreground/70">
+        Use this key to authenticate with the Kaizen CLI or your local agents. 
+        Keep it secret: anyone with this key can create and manage projects in your account.
+      </p>
+    </div>
+  );
+}
 
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
@@ -507,6 +602,10 @@ export default function AccountPage() {
 
         <Section label="Collaboration" title="Team Access" delay={160}>
           <TeamAccessSection />
+        </Section>
+
+        <Section label="Developers" title="API Keys" delay={240}>
+          <ApiKeySection />
         </Section>
 
         <Section label="Help" title="Support" delay={320}>

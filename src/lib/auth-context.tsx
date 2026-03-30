@@ -30,12 +30,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = api.getToken();
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
     api
       .getMe()
       .then((user) => {
@@ -43,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         api.clearToken();
+        api.clearDevUserApiKey();
       })
       .finally(() => {
         setLoading(false);
@@ -69,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     api.clearToken();
+    api.clearDevUserApiKey();
     setEmail(null);
     window.location.href = "/login";
   }, []);
