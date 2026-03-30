@@ -3,12 +3,22 @@
 import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
+export interface SectionAction {
+  action: "swap" | "edit" | "move_up" | "move_down" | "delete" | "content_updated";
+  sectionIndex: number;
+  sectionType?: string;
+  updates?: Record<string, string>;
+}
+
 interface PreviewFrameProps {
   previewUrl: string | null;
   isMobile: boolean;
   onToggleMobile: () => void;
   /** Called with a resolved URL string to imperatively navigate the iframe */
   navigateRef?: React.MutableRefObject<((path: string) => void) | null>;
+  onSectionAction?: (action: SectionAction) => void;
+  /** When this value changes, the iframe src is reloaded */
+  refreshKey?: number;
   className?: string;
 }
 
@@ -17,6 +27,8 @@ export function PreviewFrame({
   isMobile,
   onToggleMobile,
   navigateRef,
+  onSectionAction,
+  refreshKey,
   className,
 }: PreviewFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -26,6 +38,20 @@ export function PreviewFrame({
       iframeRef.current.src = previewUrl;
     }
   }, [previewUrl]);
+
+  // Re-load iframe when refreshKey changes (triggered by section_updated WS messages)
+  const prevRefreshKey = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (refreshKey === undefined) return;
+    if (prevRefreshKey.current === undefined) {
+      prevRefreshKey.current = refreshKey;
+      return;
+    }
+    if (refreshKey !== prevRefreshKey.current) {
+      prevRefreshKey.current = refreshKey;
+      handleRefresh();
+    }
+  }, [refreshKey, handleRefresh]);
 
   const navigateTo = useCallback(
     (path: string) => {
@@ -51,6 +77,40 @@ export function PreviewFrame({
       navigateRef.current = navigateTo;
     }
   }, [navigateRef, navigateTo]);
+
+  // Listen for postMessage events from the overlay SDK running inside the iframe.
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (!event.data || event.data.source !== "kaizen-overlay") return;
+      if (!onSectionAction) return;
+
+      const { action, sectionIndex, sectionType, updates } = event.data as {
+        source: string;
+        action: SectionAction["action"];
+        sectionIndex: number;
+        sectionType?: string;
+        updates?: Record<string, string>;
+      };
+
+      if (typeof action !== "string" || typeof sectionIndex !== "number") return;
+
+      onSectionAction({ action, sectionIndex, sectionType, updates });
+    };
+
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [onSectionAction]);
+
+  /** Send a message to the overlay SDK running inside the iframe. */
+  const postToIframe = useCallback((data: Record<string, unknown>) => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(data, "*");
+    }
+  }, []);
+
+  // Expose postToIframe via a data attribute so parent can call it if needed.
+  // (Stored on the iframe element as a convenience; callers should use the ref instead.)
+  void postToIframe;
 
   return (
     <div

@@ -1,17 +1,19 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { PreviewFrame } from "./preview-frame";
+import { PreviewFrame, SectionAction } from "./preview-frame";
 import { ChatPanel } from "./chat-panel";
 import { StylePanel } from "./style-panel";
 import { PagesPanel } from "./pages-panel";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface EditorShellProps {
+  projectId: string;
   previewUrl: string | null;
   siteModel: unknown;
   sendMessage: (data: Record<string, unknown>) => void;
   lastChatResponse: string | null;
+  refreshKey?: number;
 }
 
 const MIN_PANEL_WIDTH = 280;
@@ -19,14 +21,17 @@ const DEFAULT_PANEL_WIDTH = 320;
 const MAX_PANEL_WIDTH = 560;
 
 export function EditorShell({
+  projectId,
   previewUrl,
   siteModel,
   sendMessage,
   lastChatResponse,
+  refreshKey,
 }: EditorShellProps) {
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [isMobilePreview, setIsMobilePreview] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [activePageIndex, setActivePageIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigateRef = useRef<((path: string) => void) | null>(null);
 
@@ -63,6 +68,105 @@ export function EditorShell({
     navigateRef.current?.(path);
   }, []);
 
+  /**
+   * Handle section actions forwarded from the overlay SDK running in the iframe.
+   * Translates them into WS messages consumed by the BuilderAgent.
+   */
+  const handleSectionAction = useCallback(
+    (action: SectionAction) => {
+      const { action: op, sectionIndex, sectionType, updates } = action;
+      const pageIndex = activePageIndex;
+
+      switch (op) {
+        case "swap":
+          sendMessage({
+            type: "section_op",
+            action: "swap_section",
+            pageIndex,
+            sectionIndex,
+            currentType: sectionType ?? "",
+          });
+          break;
+
+        case "move_up":
+          if (sectionIndex === 0) return;
+          sendMessage({
+            type: "section_op",
+            action: "reorder_sections",
+            pageIndex,
+            swapA: sectionIndex - 1,
+            swapB: sectionIndex,
+          });
+          break;
+
+        case "move_down":
+          sendMessage({
+            type: "section_op",
+            action: "reorder_sections",
+            pageIndex,
+            swapA: sectionIndex,
+            swapB: sectionIndex + 1,
+          });
+          break;
+
+        case "delete": {
+          const confirmed = window.confirm(
+            `Remove section ${sectionIndex + 1}${sectionType ? ` (${sectionType})` : ""}? This cannot be undone.`
+          );
+          if (!confirmed) return;
+          sendMessage({
+            type: "section_op",
+            action: "remove_section",
+            pageIndex,
+            sectionIndex,
+          });
+          break;
+        }
+
+        case "content_updated":
+          if (updates) {
+            Object.entries(updates).forEach(([field, value]) => {
+              sendMessage({
+                type: "section_op",
+                action: "update_content",
+                pageIndex,
+                sectionIndex,
+                field,
+                value,
+              });
+            });
+          }
+          break;
+
+        case "edit":
+          // Placeholder: in a future iteration this could open an inline editor.
+          break;
+      }
+    },
+    [activePageIndex, sendMessage]
+  );
+
+  // Track which page is active based on navigation (for section action routing).
+  const handleNavigateWithTracking = useCallback(
+    (path: string) => {
+      handleNavigate(path);
+
+      // Try to infer the page index from the path by matching against siteModel.
+      if (siteModel && typeof siteModel === "object") {
+        const m = siteModel as Record<string, unknown>;
+        if (Array.isArray(m.pages)) {
+          const pages = m.pages as Array<Record<string, unknown>>;
+          const slug = path.replace(/^\//, "") || "index";
+          const idx = pages.findIndex(
+            (p) => p.slug === slug || (slug === "index" && (!p.slug || p.slug === "/"))
+          );
+          if (idx >= 0) setActivePageIndex(idx);
+        }
+      }
+    },
+    [handleNavigate, siteModel]
+  );
+
   return (
     <div
       ref={containerRef}
@@ -75,6 +179,8 @@ export function EditorShell({
         isMobile={isMobilePreview}
         onToggleMobile={() => setIsMobilePreview((p) => !p)}
         navigateRef={navigateRef}
+        onSectionAction={handleSectionAction}
+        refreshKey={refreshKey}
         className="flex-1"
       />
 
@@ -107,7 +213,7 @@ export function EditorShell({
           previewUrl={previewUrl}
           sendMessage={sendMessage}
           lastChatResponse={lastChatResponse}
-          onNavigate={handleNavigate}
+          onNavigate={handleNavigateWithTracking}
         />
       </div>
     </div>
@@ -170,6 +276,7 @@ function ControlPanel({
           siteModel={siteModel}
           previewUrl={previewUrl}
           onNavigate={onNavigate}
+          sendMessage={sendMessage}
         />
       </TabsContent>
     </Tabs>

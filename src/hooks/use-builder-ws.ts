@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 
 export interface BuilderMessage {
-  type: "progress" | "ready" | "error" | "preview_updated" | "chat_response";
+  type: "progress" | "ready" | "error" | "preview_updated" | "chat_response" | "section_updated";
   step?: number;
   total?: number;
   label?: string;
@@ -29,6 +29,7 @@ export interface UseBuilderWsReturn {
   siteModel: unknown;
   sendMessage: (data: Record<string, unknown>) => void;
   isConnected: boolean;
+  refreshKey: number;
 }
 
 const WS_BASE = "wss://kaizen-builder.fehellstrom.workers.dev/agents/BuilderAgent";
@@ -49,6 +50,7 @@ export function useBuilderWs(projectId: string): UseBuilderWsReturn {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [siteModel, setSiteModel] = useState<unknown>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempts = useRef(0);
@@ -109,6 +111,11 @@ export function useBuilderWs(projectId: string): UseBuilderWsReturn {
                   })
                 );
               }
+              break;
+
+            case "section_updated":
+              if (msg.siteModel !== undefined) setSiteModel(msg.siteModel);
+              setRefreshKey((k) => k + 1);
               break;
 
             case "error":
@@ -173,5 +180,5 @@ export function useBuilderWs(projectId: string): UseBuilderWsReturn {
     }
   }, []);
 
-  return { status, progress, previewUrl, siteModel, sendMessage, isConnected };
+  return { status, progress, previewUrl, siteModel, sendMessage, isConnected, refreshKey };
 }

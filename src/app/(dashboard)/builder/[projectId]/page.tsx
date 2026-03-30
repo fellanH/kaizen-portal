@@ -11,7 +11,7 @@ interface BuilderPageProps {
 
 export default function BuilderPage({ params }: BuilderPageProps) {
   const { projectId } = use(params);
-  const { status, progress, previewUrl, siteModel, sendMessage } =
+  const { status, progress, previewUrl, siteModel, sendMessage, refreshKey } =
     useBuilderWs(projectId);
 
   // Chat responses come via a custom window event dispatched from the WS hook.
@@ -93,10 +93,12 @@ export default function BuilderPage({ params }: BuilderPageProps) {
           }}
         >
           <EditorShell
+            projectId={projectId}
             previewUrl={previewUrl}
             siteModel={siteModel}
             sendMessage={sendMessage}
             lastChatResponse={lastChatResponse}
+            refreshKey={refreshKey}
           />
         </div>
       )}
