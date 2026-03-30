@@ -5,7 +5,6 @@ import { ExternalLink, Plus, PlusCircle, Trash2 } from "lucide-react";
 import { api, type Project } from "@/lib/api";
 import { useProjects } from "@/lib/projects-context";
 import { toast } from "sonner";
-import { slugify } from "@/lib/slugify";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -188,7 +187,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
   return (
     <Link
-      href={`/projects/${slugify(project.company_name)}`}
+      href={`/projects/detail?token=${project.token}`}
       className="project-card-enter group block"
       style={{ animationDelay: `${index * 80}ms` }}
     >
