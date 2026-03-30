@@ -9,6 +9,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { slugify } from "@/lib/slugify";
 
 /* ── Pipeline stages in logical order ── */
 const PIPELINE_STAGES = [
@@ -187,7 +188,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
   return (
     <Link
-      href={`/projects/detail?token=${project.token}`}
+      href={`/project/${slugify(project.company_name)}`}
       className="project-card-enter group block"
       style={{ animationDelay: `${index * 80}ms` }}
     >

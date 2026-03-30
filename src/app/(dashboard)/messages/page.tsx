@@ -156,7 +156,7 @@ export default function MessagesPage() {
                   {msgs.map((msg, i) => (
                     <Link
                       key={msg.id}
-                      href={`/projects/${slugify(msg.company_name)}`}
+                      href={`/project/${slugify(msg.company_name)}`}
                       className="ds-section group block rounded-lg px-4 py-3 transition-colors duration-200 hover:bg-muted/50"
                       style={{ animationDelay: `${i * 40}ms` }}
                     >

@@ -11,8 +11,8 @@ const TIERS = [
   {
     value: "starter",
     label: "Starter",
-    price: "19 000",
-    timeline: "3\u20135 days",
+    price: "1 700",
+    timeline: "Minutes",
     features: [
       "5 pages",
       "5 blog articles",
@@ -23,7 +23,7 @@ const TIERS = [
   {
     value: "professional",
     label: "Professional",
-    price: "32 000",
+    price: "2 900",
     timeline: "5\u20137 days",
     recommended: true,
     features: [
@@ -38,7 +38,7 @@ const TIERS = [
   {
     value: "premium",
     label: "Premium",
-    price: "49 000",
+    price: "4 500",
     timeline: "7\u201310 days",
     features: [
       "10+ pages",
@@ -190,13 +190,12 @@ export default function NewProjectPage() {
                   {t.label}
                 </span>
                 <div className="mt-3 flex items-baseline gap-1.5">
-                  <span
-                    className="text-2xl font-semibold tracking-tight text-foreground"
+                  <span className="text-2xl font-semibold tracking-tight text-foreground"
                     style={{ letterSpacing: "-0.03em" }}
                   >
                     {t.price}
                   </span>
-                  <span className="text-xs text-muted-foreground">SEK</span>
+                  <span className="text-xs text-muted-foreground">EUR</span>
                 </div>
                 <span className="mt-1 text-xs text-muted-foreground/70">
                   {t.timeline} delivery
@@ -229,7 +228,7 @@ export default function NewProjectPage() {
             ))}
           </div>
           <p className="mt-4 text-center text-[11px] text-muted-foreground/60">
-            All prices exclude 25% VAT (moms). Prices in SEK.
+            All prices exclude 25% VAT (moms). Prices in EUR.
           </p>
         </div>
 
@@ -262,7 +261,7 @@ export default function NewProjectPage() {
                 <>
                   Continue to Payment
                   <span className="text-xs opacity-80">
-                    {selectedTier.price} SEK
+                    {selectedTier.price} EUR
                   </span>
                 </>
               )}
