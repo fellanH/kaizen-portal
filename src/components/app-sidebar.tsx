@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth-context";
 import { useProjects } from "@/lib/projects-context";
-import { FolderKanban, MessageSquare, User, LogOut, Sun, Moon } from "lucide-react";
+import { FolderKanban, MessageSquare, User, CreditCard, LogOut, Sun, Moon } from "lucide-react";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -37,6 +37,7 @@ export function AppSidebar() {
       badge: projects.length || null,
     },
     { title: "Messages", href: "/messages", icon: MessageSquare, badge: null },
+    { title: "Billing", href: "/billing", icon: CreditCard, badge: null },
     { title: "Account", href: "/account", icon: User, badge: null },
   ];
 
@@ -103,7 +104,7 @@ export function AppSidebar() {
                     render={<Link href={item.href} />}
                     isActive={
                       item.href === "/projects"
-                        ? pathname === "/projects" || pathname.startsWith("/projects/") || (pathname !== "/" && pathname !== "/login" && pathname !== "/messages" && pathname !== "/account")
+                        ? pathname === "/projects" || pathname.startsWith("/projects/") || (pathname !== "/" && pathname !== "/login" && pathname !== "/messages" && pathname !== "/billing" && pathname !== "/account")
                         : pathname.startsWith(item.href)
                     }
                   >

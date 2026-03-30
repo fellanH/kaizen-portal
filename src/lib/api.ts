@@ -1,8 +1,17 @@
 const API_BASE = "https://kaizen-intake-api.fehellstrom.workers.dev";
 
+const DEV_USER_API_KEY_STORAGE_KEY = "kaizen_dev_user_api_key";
+
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("kaizen_jwt");
+}
+
+function getDevUserApiKey(): string | null {
+  if (typeof window === "undefined") return null;
+  if (process.env.NODE_ENV !== "development") return null;
+  const v = localStorage.getItem(DEV_USER_API_KEY_STORAGE_KEY);
+  return v && v.trim().length > 0 ? v : null;
 }
 
 function setToken(token: string) {
@@ -13,11 +22,22 @@ function clearToken() {
   localStorage.removeItem("kaizen_jwt");
 }
 
+function setDevUserApiKey(key: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(DEV_USER_API_KEY_STORAGE_KEY, key);
+}
+
+function clearDevUserApiKey() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(DEV_USER_API_KEY_STORAGE_KEY);
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
   const token = getToken();
+  const devApiKey = getDevUserApiKey();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
@@ -25,6 +45,8 @@ async function request<T>(
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  } else if (devApiKey) {
+    headers["X-API-Key"] = devApiKey;
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -34,6 +56,7 @@ async function request<T>(
 
   if (res.status === 401) {
     clearToken();
+    clearDevUserApiKey();
     throw new Error("Unauthorized");
   }
 
@@ -388,6 +411,16 @@ export const api = {
     return request<{ collaborators: Collaborator[] }>(`/project/${token}/collaborators`);
   },
 
+  getApiKey() {
+    return request<{ apiKey: string | null }>("/auth/api-key");
+  },
+
+  generateApiKey() {
+    return request<{ apiKey: string }>("/auth/api-key", {
+      method: "POST",
+    });
+  },
+
   async getAnalytics(projectToken: string, period: "7d" | "30d" | "all" = "7d"): Promise<AnalyticsSummary> {
     const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
     try {
@@ -456,7 +489,30 @@ export const api = {
       });
   },
 
+  getSubscription(userId: string) {
+    return request<{ tier: string | null; status: string | null; subscriptionId: string | null }>(
+      `/subscriptions/${encodeURIComponent(userId)}`
+    );
+  },
+
+  createSubscription(tier: string, userId: string) {
+    return request<{ url: string }>("/subscriptions/create", {
+      method: "POST",
+      body: JSON.stringify({ tier, userId }),
+    });
+  },
+
+  cancelSubscription(subscriptionId: string) {
+    return request<{ status: string }>("/subscriptions/cancel", {
+      method: "POST",
+      body: JSON.stringify({ subscriptionId }),
+    });
+  },
+
   setToken,
   clearToken,
   getToken,
+  setDevUserApiKey,
+  clearDevUserApiKey,
+  getDevUserApiKey,
 };
