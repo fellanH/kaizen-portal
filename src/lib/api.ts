@@ -102,6 +102,7 @@ interface ProjectRaw {
   contract_accepted?: boolean;
   contract_accepted_at?: string;
   original_screenshot_url?: string;
+  style_guide?: StyleGuide;
 }
 
 /** Normalized project with consistent field names used throughout the portal */
@@ -174,6 +175,41 @@ export interface Collaborator {
 
 export interface AuthUser {
   email: string;
+}
+
+export interface StyleGuide {
+  brand_name: string;
+  industry: string;
+  personality: string;
+  typography: {
+    heading_font: string;
+    heading_weight: number;
+    body_font: string;
+    body_weight: number;
+    scale: "compact" | "default" | "editorial";
+  };
+  colors: {
+    background: string;
+    surface: string;
+    surface_alt: string;
+    surface_dark: string;
+    surface_dark_alt: string;
+    ink: string;
+    ink_secondary: string;
+    ink_inverse: string;
+    ink_inverse_secondary: string;
+    accent: string;
+    accent_dark: string;
+    border: string;
+    mode: "warm" | "cool" | "neutral";
+  };
+  ui: {
+    button_radius: "sharp" | "soft" | "pill";
+    card_radius: "sharp" | "soft";
+    card_shadow: "none" | "subtle" | "elevated";
+    nav_style: "transparent" | "solid" | "minimal";
+    section_spacing: "tight" | "default" | "generous";
+  };
 }
 
 export interface AnalyticsSummary {

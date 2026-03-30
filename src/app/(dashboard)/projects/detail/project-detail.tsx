@@ -17,6 +17,7 @@ import { ProjectDomainCheck } from "@/components/project-domain-check";
 import { ProjectAnalyticsSummary } from "@/components/project-analytics-summary";
 import { ProjectContentEditor } from "@/components/project-content-editor";
 import { BuildProgress } from "@/components/build-progress";
+import { StyleGuidePreview } from "@/components/style-guide-preview";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -472,6 +473,11 @@ export function ProjectDetail({ token }: { token: string }) {
             </Card>
           )}
 
+          {/* Style guide preview (pipeline v2) */}
+          {project.style_guide && (
+            <StyleGuidePreview guide={project.style_guide} />
+          )}
+
           {hasSpecContent && (
             <div>
               <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground/60">
@@ -504,6 +510,11 @@ export function ProjectDetail({ token }: { token: string }) {
       {/* Review stage: preview dominates, tabs below */}
       {isReviewStage && (
         <div className="mt-8 space-y-6">
+          {/* Style guide preview (pipeline v2) */}
+          {project.style_guide && (
+            <StyleGuidePreview guide={project.style_guide} />
+          )}
+
           {hasPreviewUrl && (
             <PreviewFrame url={previewUrl!} />
           )}
